@@ -1,0 +1,14 @@
+mutation SdkActivateSiteBundle($input: ActivateSiteBundleInput!) {
+  activateSiteBundle(input: $input) {
+    siteBundle {
+      id
+      version
+      status
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

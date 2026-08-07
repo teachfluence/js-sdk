@@ -1,0 +1,97 @@
+name: Publish
+
+# Manual only, and deliberately so. Publishing to npm is irreversible — a
+# version number can be deprecated but never reused — and these packages are a
+# public API contract for customers building their own frontends. A push-
+# triggered publish would mean any sync from upstream could freeze a surface
+# nobody reviewed as a release.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Pack and validate without publishing'
+        type: boolean
+        default: true
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # Needed for npm provenance, which records WHICH workflow run produced a
+  # tarball. For a package customers install into their own sites, that
+  # attestation is the difference between "npm says this is ours" and "npm says
+  # this was built from our repo by our CI".
+  #
+  # It is also the entire reason this mirror repository exists: npm stopped
+  # supporting provenance from private source repositories in July 2023, so a
+  # publish from the upstream application repo cannot be attested at all.
+  id-token: write
+
+jobs:
+  publish:
+    name: Build and publish
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # No lockfile by design — see .gitignore. The only dependencies are two
+      # exact-pinned devDependencies, so `npm install` is already deterministic.
+      - run: npm install --no-audit --no-fund
+
+      - run: npm run build
+
+      # Guards the failure mode that made the first release attempt unshippable:
+      # the packages compiled cleanly while emitting extensionless relative
+      # imports, which Node's ESM resolver refuses. Everything downstream of a
+      # build looks healthy when this breaks — the tarball is well-formed, the
+      # types resolve — so the only honest check is to load the artifacts the
+      # way a customer will.
+      - name: Smoke-check that the built artifacts load under Node
+        run: |
+          node --input-type=module -e "
+            const m = await import('./packages/sdk/dist/index.js');
+            if (typeof m.TeachfluenceClient !== 'function') {
+              throw new Error('SDK loaded but TeachfluenceClient is missing');
+            }
+            console.log('sdk: loads, exports TeachfluenceClient');
+          "
+          if node packages/cli/dist/index.js 2>&1 | grep -q 'Usage: teachfluence deploy'; then
+            echo "cli: starts and prints usage"
+          else
+            echo "::error::CLI did not start — check for unresolved imports in dist/"
+            node packages/cli/dist/index.js || true
+            exit 1
+          fi
+
+      - name: Pack (dry run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          npm pack -w @teachfluence/sdk --pack-destination /tmp
+          npm pack -w @teachfluence/cli --pack-destination /tmp
+
+      # Provenance comes from `publishConfig.provenance` in each package.json
+      # rather than a flag here, so it cannot be lost by editing this file.
+      #
+      # Separate steps on purpose: if the second publish fails, the log says
+      # which package is already on npm and which still needs a release. npm
+      # refuses to reuse a version, so a blind re-run of a combined step would
+      # fail on the one that succeeded.
+      - name: Publish @teachfluence/sdk
+        if: ${{ !inputs.dry_run }}
+        run: npm publish -w @teachfluence/sdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @teachfluence/cli
+        if: ${{ !inputs.dry_run }}
+        run: npm publish -w @teachfluence/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

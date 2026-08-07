@@ -1,0 +1,44 @@
+{
+  "name": "@teachfluence/sdk",
+  "version": "0.1.0",
+  "description": "Build your own frontend on Teachfluence — catalog, sessions, cart and hosted checkout.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teachfluence/js-sdk.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/teachfluence/js-sdk/tree/main/packages/sdk#readme",
+  "bugs": "https://github.com/teachfluence/js-sdk/issues",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./persisted-manifest.json": "./persisted-manifest.json"
+  },
+  "files": [
+    "dist",
+    "persisted-manifest.json"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "teachfluence",
+    "headless",
+    "lms"
+  ]
+}

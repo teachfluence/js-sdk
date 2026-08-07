@@ -1,0 +1,5 @@
+query SdkOrganizationIdBySlug($slug: String!) {
+  organization(slug: $slug) {
+    id
+  }
+}

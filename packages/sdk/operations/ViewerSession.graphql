@@ -1,0 +1,17 @@
+query SdkViewerSession {
+  viewer {
+    __typename
+    ... on User {
+      id
+      email
+      firstName
+      lastName
+    }
+    ... on OrganizationStudent {
+      id
+      email
+      firstName
+      lastName
+    }
+  }
+}

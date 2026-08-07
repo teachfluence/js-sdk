@@ -1,0 +1,13 @@
+mutation SdkSignSiteBundleUpload($input: SignSiteBundleUploadInput!) {
+  signSiteBundleUpload(input: $input) {
+    uploadTarget {
+      apiUrl
+      formFields
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

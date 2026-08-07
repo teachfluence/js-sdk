@@ -1,0 +1,8 @@
+node_modules/
+dist/
+
+# Not committed on purpose. The only dependencies here are two exact-pinned
+# devDependencies (typescript, @types/node) and no runtime dependencies at
+# all, so the pins already give a deterministic install — a lockfile would add
+# nothing but a second file for the sync to keep current.
+package-lock.json

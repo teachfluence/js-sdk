@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2022", "DOM"],
+    // NodeNext, not Bundler. Bundler lets tsc ACCEPT extensionless relative
+    // imports and emit them verbatim, which Node's ESM resolver then refuses
+    // (`ERR_MODULE_NOT_FOUND`) — the package built fine and was unloadable by
+    // any consumer that was not a bundler. NodeNext makes the missing `.js`
+    // a compile error, so tsc is the guard against this regressing.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

@@ -1,0 +1,14 @@
+mutation SdkPinGeneratedPageEntity($input: PinGeneratedPageEntityInput!) {
+  pinGeneratedPageEntity(input: $input) {
+    generatedPageEntityPin {
+      id
+      entityId
+      reason
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

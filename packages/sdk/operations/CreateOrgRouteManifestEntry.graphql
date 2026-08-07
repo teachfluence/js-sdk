@@ -1,0 +1,20 @@
+mutation SdkCreateOrgRouteManifestEntry($input: CreateOrgRouteManifestEntryInput!) {
+  createOrgRouteManifestEntry(input: $input) {
+    orgRouteManifestEntry {
+      id
+      pathPattern
+      scope
+      priority
+      isActive
+    }
+    shadowReport {
+      count
+      sampleUrls
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

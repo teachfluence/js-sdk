@@ -1,0 +1,13 @@
+mutation SdkUnpinGeneratedPageEntity($input: UnpinGeneratedPageEntityInput!) {
+  unpinGeneratedPageEntity(input: $input) {
+    generatedPageEntityPin {
+      id
+      entityId
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

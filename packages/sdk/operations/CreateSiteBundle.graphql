@@ -1,0 +1,13 @@
+mutation SdkCreateSiteBundle($input: CreateSiteBundleInput!) {
+  createSiteBundle(input: $input) {
+    siteBundle {
+      id
+      version
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@teachfluence/cli",
+  "version": "0.1.0",
+  "description": "Deploy your own frontend to Teachfluence.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teachfluence/js-sdk.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/teachfluence/js-sdk/tree/main/packages/cli#readme",
+  "bugs": "https://github.com/teachfluence/js-sdk/issues",
+  "type": "module",
+  "bin": {
+    "teachfluence": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "teachfluence",
+    "deploy",
+    "cli"
+  ]
+}

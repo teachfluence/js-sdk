@@ -1,0 +1,14 @@
+{
+  "operations": {
+    "6488499604b52510d00508b5d63795fa4cf3ab57886346de48af6e5e9acbc807": "mutation SdkActivateSiteBundle($input: ActivateSiteBundleInput!) {\n  activateSiteBundle(input: $input) {\n    siteBundle {\n      id\n      version\n      status\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "18e5ba356cc2f87d337d1e585c17a3f703c4c9e0beca26bc0ec2e05b77d6f0c5": "mutation SdkCreateOrgRouteManifestEntry($input: CreateOrgRouteManifestEntryInput!) {\n  createOrgRouteManifestEntry(input: $input) {\n    orgRouteManifestEntry {\n      id\n      pathPattern\n      scope\n      priority\n      isActive\n    }\n    shadowReport {\n      count\n      sampleUrls\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "6b17eb0c680dba2308d45c4791bc87f960783d6421a54b989a28be9220448cac": "mutation SdkCreateSiteBundle($input: CreateSiteBundleInput!) {\n  createSiteBundle(input: $input) {\n    siteBundle {\n      id\n      version\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "7d0aed4b26f18449312247b689ee6ae2ab8994945bec29629652a736bd5fecaf": "mutation SdkFinalizeSiteBundle($input: FinalizeSiteBundleInput!) {\n  finalizeSiteBundle(input: $input) {\n    siteBundle {\n      id\n      version\n      status\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "8b2d500378479f3c374b2eec0bd6213569e3ee309036cfae04bcbe0ecb8d3c02": "query SdkOrganizationIdBySlug($slug: String!) {\n  organization(slug: $slug) {\n    id\n  }\n}\n",
+    "1754831a290698b9ad2e8501a26ee4493ff93fa35fce60ba6bac97ad292024a2": "mutation SdkPinGeneratedPageEntity($input: PinGeneratedPageEntityInput!) {\n  pinGeneratedPageEntity(input: $input) {\n    generatedPageEntityPin {\n      id\n      entityId\n      reason\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "67607273c385a7721429b0ce86e4a6b99241f470cb63d8b4960d46370c4c262b": "mutation SdkSignSiteBundleUpload($input: SignSiteBundleUploadInput!) {\n  signSiteBundleUpload(input: $input) {\n    uploadTarget {\n      apiUrl\n      formFields\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "662e001108b6063ecf1f3c297cb72d548a1317b35c9b13b0c887fe296f433c25": "mutation SdkUnpinGeneratedPageEntity($input: UnpinGeneratedPageEntityInput!) {\n  unpinGeneratedPageEntity(input: $input) {\n    generatedPageEntityPin {\n      id\n      entityId\n    }\n    userErrors {\n      code\n      field\n      message\n    }\n  }\n}\n",
+    "8eea5ee62fa972dd98488327be4c480e1c8eeaa9038bca187ffbff3a6d5ae88d": "query SdkViewerSession {\n  viewer {\n    __typename\n    ... on User {\n      id\n      email\n      firstName\n      lastName\n    }\n    ... on OrganizationStudent {\n      id\n      email\n      firstName\n      lastName\n    }\n  }\n}\n"
+  },
+  "version": "0.1.0"
+}
