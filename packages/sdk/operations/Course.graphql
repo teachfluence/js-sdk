@@ -1,0 +1,25 @@
+query SdkCourse($organizationSlug: String!, $slug: String!) {
+  course(organizationSlug: $organizationSlug, slug: $slug) {
+    id
+    title
+    slug
+    shortDescription
+    academicTerms {
+      id
+      title
+      slug
+      viewerCanOrder
+      viewerCanOrderAsGift
+      salesPaused
+      remainingCapacity
+      sellingPrice {
+        amount
+        currency
+      }
+      discountedPrice {
+        amount
+        currency
+      }
+    }
+  }
+}

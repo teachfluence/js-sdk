@@ -20,6 +20,13 @@
  * to what we chose to publish rather than to the whole schema — and lets the
  * schema keep evolving behind it.
  */
+// The operations themselves. Without these `execute()` is uncallable — it takes
+// a `PersistedOperation`, and a consumer has no other way to obtain one: the
+// documents live in the API's manifest, and the ids are content hashes nobody
+// should be transcribing by hand. Every identifier here is `Sdk`-prefixed so
+// importing them into a storefront's scope collides with nothing.
+export * from './__generated__/operations.js';
+
 export { TeachfluenceClient } from './client.js';
 export type {
   PersistedOperation,

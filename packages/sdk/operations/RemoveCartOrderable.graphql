@@ -1,0 +1,38 @@
+mutation SdkRemoveCartOrderable($input: RemoveCartOrderableInput!) {
+  removeCartOrderable(input: $input) {
+    cart {
+      id
+      originalPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+      sellingPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+      discountedPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+      orderables {
+        orderable {
+          __typename
+          ... on Node {
+            id
+          }
+        }
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import {
-  ActivateSiteBundle,
-  CreateOrgRouteManifestEntry,
-  CreateSiteBundle,
-  FinalizeSiteBundle,
-  OrganizationIdBySlug,
-  SignSiteBundleUpload,
+  SdkActivateSiteBundle,
+  SdkCreateOrgRouteManifestEntry,
+  SdkCreateSiteBundle,
+  SdkFinalizeSiteBundle,
+  SdkOrganizationIdBySlug,
+  SdkSignSiteBundleUpload,
 } from './__generated__/operations.js';
 import { graphql } from './api.js';
 import { parseArgs } from './args.js';
@@ -78,7 +78,7 @@ async function main(): Promise<void> {
   // because ids are opaque; something has to translate, and it is this.
   const { organization } = await graphql<{
     organization: { id: string } | null;
-  }>(OrganizationIdBySlug.id, { slug: args.organizationSlug }, secretKey);
+  }>(SdkOrganizationIdBySlug.id, { slug: args.organizationSlug }, secretKey);
 
   if (!organization) {
     throw new UsageError(
@@ -91,7 +91,7 @@ async function main(): Promise<void> {
   const { createSiteBundle } = await graphql<{
     createSiteBundle: { siteBundle: { id: string; version: number } };
   }>(
-    CreateSiteBundle.id,
+    SdkCreateSiteBundle.id,
     {
       input: {
         organizationId,
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
         uploadTarget: { apiUrl: string; formFields: Record<string, string> };
       };
     }>(
-      SignSiteBundleUpload.id,
+      SdkSignSiteBundleUpload.id,
       {
         input: {
           bundleId: bundle.id,
@@ -133,7 +133,7 @@ async function main(): Promise<void> {
   process.stdout.write('\n');
 
   await graphql(
-    FinalizeSiteBundle.id,
+    SdkFinalizeSiteBundle.id,
     {
       input: {
         bundleId: bundle.id,
@@ -169,7 +169,7 @@ async function main(): Promise<void> {
       userErrors?: { message: string }[];
     };
   }>(
-    CreateOrgRouteManifestEntry.id,
+    SdkCreateOrgRouteManifestEntry.id,
     {
       input: {
         acknowledgeShadowing: args.acknowledgeShadowing,
@@ -219,7 +219,7 @@ async function main(): Promise<void> {
   }
 
   await graphql(
-    ActivateSiteBundle.id,
+    SdkActivateSiteBundle.id,
     {
       input: {
         bundleId: bundle.id,

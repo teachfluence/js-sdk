@@ -1,3 +1,37 @@
+import type {
+  SdkAddCartOrderableMutationVariables,
+  SdkAddCouponCodeMutationVariables,
+  SdkCartQueryVariables,
+  SdkCatalogQueryVariables,
+  SdkCoachingSessionQueryVariables,
+  SdkCompleteFreeOrderMutationVariables,
+  SdkCourseQueryVariables,
+  SdkCreateOrderMutationVariables,
+  SdkDigitalProductQueryVariables,
+  SdkLiveEventQueryVariables,
+  SdkMarkCartItemAsGiftMutationVariables,
+  SdkOrderQueryVariables,
+  SdkRemoveCartOrderableMutationVariables,
+  SdkRemoveCouponCodeMutationVariables,
+} from './__generated__/types.js';
+
+import {
+  SdkAddCartOrderable,
+  SdkAddCouponCode,
+  SdkCart,
+  SdkCatalog,
+  SdkCoachingSession,
+  SdkCompleteFreeOrder,
+  SdkCourse,
+  SdkCreateOrder,
+  SdkDigitalProduct,
+  SdkLiveEvent,
+  SdkMarkCartItemAsGift,
+  SdkOrder,
+  SdkRemoveCartOrderable,
+  SdkRemoveCouponCode,
+  SdkViewerSession,
+} from './__generated__/operations.js';
 import {
   type UserError,
   TeachfluenceOperationError,
@@ -37,6 +71,12 @@ export interface TeachfluenceClientOptions {
   apiKey?: string;
   /** Override the API origin. Defaults to production. */
   baseUrl?: string;
+  /**
+   * Origin of the HOSTED checkout page, which is not the API origin — payment
+   * is a page a buyer is sent to, not a request this SDK makes. Override when
+   * running against a non-production environment.
+   */
+  checkoutBaseUrl?: string;
   fetch?: typeof globalThis.fetch;
   /**
    * Called when a request is made without a session. Lets a host app supply a
@@ -46,6 +86,7 @@ export interface TeachfluenceClientOptions {
 }
 
 const DEFAULT_BASE_URL = 'https://api.teachfluence.com';
+const DEFAULT_CHECKOUT_BASE_URL = 'https://teachfluence.com';
 
 /**
  * A secret key must never reach a browser. This catches the single most likely
@@ -68,16 +109,147 @@ function assertKeyIsSafeForEnvironment(apiKey: string | undefined): void {
   }
 }
 
+/**
+ * The checkout page is a different origin from the API, and the SDK cannot
+ * derive one from the other — `api.teachfluence.com` maps to
+ * `teachfluence.com` in production, but nothing about `http://localhost:4000`
+ * says where its checkout lives.
+ *
+ * So an integrator who points `baseUrl` at staging and forgets
+ * `checkoutBaseUrl` would place orders on staging and then redirect real
+ * buyers to the PRODUCTION payment page, for an order id that does not exist
+ * there. Silently defaulting is what makes that possible; refusing to guess is
+ * the fix.
+ */
+function assertCheckoutOriginIsResolvable(
+  options: TeachfluenceClientOptions,
+): void {
+  if (options.baseUrl && !options.checkoutBaseUrl) {
+    throw new TeachfluenceTransportError(
+      'A custom `baseUrl` was given without a `checkoutBaseUrl`. The hosted ' +
+        'checkout page is a separate origin from the API and cannot be derived ' +
+        'from it, so `paymentUrl()` would send buyers to production while your ' +
+        'orders were created somewhere else. Set `checkoutBaseUrl` too.',
+    );
+  }
+}
+
+/**
+ * Variables minus the org slug, which the client already knows.
+ *
+ * The slug is REMOVED, not made optional. `execute()` always sends the
+ * constructor's slug in the `X-Teachfluence-Org` header, so letting a caller
+ * pass a different one in the variables would put two different tenants in one
+ * request — and which of them the server honours is not something the caller
+ * could reason about. One client speaks for one organization.
+ */
+type WithoutOrg<T> = Omit<T, 'organizationSlug'>;
+
 export class TeachfluenceClient {
   private readonly baseUrl: string;
+  private readonly checkoutBaseUrl: string;
   private readonly doFetch: typeof globalThis.fetch;
   private readonly options: TeachfluenceClientOptions;
+
+  /**
+   * The cart, which works for a signed-out visitor.
+   *
+   * Pass `cartId` for an anonymous shopper and persist what comes back —
+   * without it every call starts a new cart. A signed-in visitor's cart is
+   * keyed on their session instead, so `cartId` is ignored there.
+   */
+  readonly cart = {
+    add: (input: SdkAddCartOrderableMutationVariables['input']) =>
+      this.execute(SdkAddCartOrderable, { input }),
+    addCoupon: (input: SdkAddCouponCodeMutationVariables['input']) =>
+      this.execute(SdkAddCouponCode, { input }),
+    get: (variables: WithoutOrg<SdkCartQueryVariables> = {}) =>
+      this.execute(SdkCart, this.withOrg(variables)),
+    markAsGift: (input: SdkMarkCartItemAsGiftMutationVariables['input']) =>
+      this.execute(SdkMarkCartItemAsGift, { input }),
+    remove: (input: SdkRemoveCartOrderableMutationVariables['input']) =>
+      this.execute(SdkRemoveCartOrderable, { input }),
+    removeCoupon: (input: SdkRemoveCouponCodeMutationVariables['input']) =>
+      this.execute(SdkRemoveCouponCode, { input }),
+  };
+
+  /**
+   * Reading published content. Everything here is anonymous-safe — a
+   * publishable key grants nothing a visitor could not already see.
+   */
+  readonly catalog = {
+    coachingSession: (variables: WithoutOrg<SdkCoachingSessionQueryVariables>) =>
+      this.execute(SdkCoachingSession, this.withOrg(variables)),
+    /**
+     * A course is not itself orderable — its ACADEMIC TERMS are, which is why
+     * the result carries them with their own prices and availability. Add a
+     * term id to the cart, never the course id.
+     */
+    course: (variables: WithoutOrg<SdkCourseQueryVariables>) =>
+      this.execute(SdkCourse, this.withOrg(variables)),
+    digitalProduct: (variables: WithoutOrg<SdkDigitalProductQueryVariables>) =>
+      this.execute(SdkDigitalProduct, this.withOrg(variables)),
+    /** Courses, bundles, digital products and live events in one round trip. */
+    list: (variables: WithoutOrg<SdkCatalogQueryVariables> = {}) =>
+      this.execute(SdkCatalog, this.withOrg(variables)),
+    liveEvent: (variables: WithoutOrg<SdkLiveEventQueryVariables>) =>
+      this.execute(SdkLiveEvent, this.withOrg(variables)),
+  };
+
+  /**
+   * Turning a cart into an order, then handing the buyer to the hosted
+   * payment page.
+   *
+   * There is no payment form here and there will not be one — see the README.
+   * `createOrder` accepts `cartId` for a signed-out buyer, and the payment page
+   * admits an anonymous visitor while the order is still pending, so the whole
+   * flow works without the buyer ever signing in.
+   */
+  readonly checkout = {
+    completeFreeOrder: (
+      input: SdkCompleteFreeOrderMutationVariables['input'],
+    ) => this.execute(SdkCompleteFreeOrder, { input }),
+    createOrder: (input: SdkCreateOrderMutationVariables['input']) =>
+      this.execute(SdkCreateOrder, { input }),
+    /**
+     * Read an order back — a confirmation page, or polling for the payment to
+     * settle after the buyer returns from the hosted page.
+     *
+     * Readable by an anonymous buyer while the order is still pending, which
+     * is what makes a confirmation page work without an account. That window
+     * closes once the order settles, so a long-lived "my orders" view needs a
+     * signed-in viewer.
+     */
+    order: (variables: SdkOrderQueryVariables) =>
+      this.execute(SdkOrder, variables),
+    /**
+     * Where to send the buyer once an order exists. Send them to the returned
+     * URL; do not fetch it.
+     *
+     * `iframe` asks the page for its embeddable form — only useful if you are
+     * embedding it, and the page's frame-ancestors policy governs whether your
+     * origin may.
+     */
+    paymentUrl: (orderSlug: string, options?: { iframe?: boolean }) =>
+      `${this.checkoutBaseUrl}/odeme/${encodeURIComponent(orderSlug)}` +
+      (options?.iframe ? '?iframe=true' : ''),
+  };
+
+  /** Who the current visitor is, if anyone. */
+  readonly session = {
+    viewer: () => this.execute(SdkViewerSession, {}),
+  };
 
   constructor(options: TeachfluenceClientOptions) {
     assertKeyIsSafeForEnvironment(options.apiKey);
 
+    assertCheckoutOriginIsResolvable(options);
+
     this.options = options;
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
+    this.checkoutBaseUrl = (
+      options.checkoutBaseUrl ?? DEFAULT_CHECKOUT_BASE_URL
+    ).replace(/\/+$/, '');
 
     const fetchImpl = options.fetch ?? globalThis.fetch;
 
@@ -90,6 +262,11 @@ export class TeachfluenceClient {
     // Bind so a runtime that requires `fetch` be called on its global (undici,
     // some edge runtimes) does not throw an illegal-invocation error.
     this.doFetch = fetchImpl.bind(globalThis);
+  }
+
+  /** Fills in the organization slug the client was constructed with. */
+  private withOrg<T>(variables: T): T & { organizationSlug: string } {
+    return { ...variables, organizationSlug: this.options.organizationSlug };
   }
 
   /**

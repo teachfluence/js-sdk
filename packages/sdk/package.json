@@ -1,7 +1,7 @@
 {
   "name": "@teachfluence/sdk",
   "version": "0.1.0",
-  "description": "Build your own frontend on Teachfluence — catalog, sessions, cart and hosted checkout.",
+  "description": "Build your own frontend on Teachfluence — catalog, cart and hosted checkout.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,6 +17,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./operations": {
+      "types": "./dist/__generated__/operations.d.ts",
+      "default": "./dist/__generated__/operations.js"
     },
     "./persisted-manifest.json": "./persisted-manifest.json"
   },

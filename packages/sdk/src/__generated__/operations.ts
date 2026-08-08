@@ -5,59 +5,193 @@
  * Only ids ship to the client. The documents themselves live in the API's
  * manifest, which is why a consumer of this SDK cannot construct an arbitrary
  * query even by editing the bundle.
+ *
+ * The phantom type arguments are what `execute()` reads to infer a call's
+ * result and variables; they are erased at runtime.
+ *
+ * An explicit ANNOTATION, not `as const satisfies`. `satisfies` checks a value
+ * against a type without changing the type it is declared as, and the phantom
+ * properties are optional — so the constant's own type carried no trace of
+ * them, `execute()` had nothing to infer from, and every call came back
+ * `unknown` even once the types existed. Annotating is what makes inference
+ * reach the caller.
  */
 import type { PersistedOperation } from '../client.js';
+import type {
+  SdkAddCartOrderableMutation,
+  SdkAddCartOrderableMutationVariables,
+  SdkAddCouponCodeMutation,
+  SdkAddCouponCodeMutationVariables,
+  SdkCartQuery,
+  SdkCartQueryVariables,
+  SdkCatalogQuery,
+  SdkCatalogQueryVariables,
+  SdkCoachingSessionQuery,
+  SdkCoachingSessionQueryVariables,
+  SdkCompleteFreeOrderMutation,
+  SdkCompleteFreeOrderMutationVariables,
+  SdkCourseQuery,
+  SdkCourseQueryVariables,
+  SdkCreateOrderMutation,
+  SdkCreateOrderMutationVariables,
+  SdkDigitalProductQuery,
+  SdkDigitalProductQueryVariables,
+  SdkLiveEventQuery,
+  SdkLiveEventQueryVariables,
+  SdkMarkCartItemAsGiftMutation,
+  SdkMarkCartItemAsGiftMutationVariables,
+  SdkOrderQuery,
+  SdkOrderQueryVariables,
+  SdkOrganizationIdBySlugQuery,
+  SdkOrganizationIdBySlugQueryVariables,
+  SdkRemoveCartOrderableMutation,
+  SdkRemoveCartOrderableMutationVariables,
+  SdkRemoveCouponCodeMutation,
+  SdkRemoveCouponCodeMutationVariables,
+  SdkViewerSessionQuery,
+  SdkViewerSessionQueryVariables,
+} from './types.js';
 
-/** `SdkActivateSiteBundle` */
-export const ActivateSiteBundle = {
-  id: '6488499604b52510d00508b5d63795fa4cf3ab57886346de48af6e5e9acbc807',
-  operationName: 'SdkActivateSiteBundle',
-} as const satisfies PersistedOperation<unknown, object>;
+/** `SdkAddCartOrderable` */
+export const SdkAddCartOrderable: PersistedOperation<
+  SdkAddCartOrderableMutation,
+  SdkAddCartOrderableMutationVariables
+> = {
+  id: 'aba60d6d0a82e0eeedc876f0471e2179c7be6b23d63eded2428b6a2a65cdeab5',
+  operationName: 'SdkAddCartOrderable',
+};
 
-/** `SdkCreateOrgRouteManifestEntry` */
-export const CreateOrgRouteManifestEntry = {
-  id: '18e5ba356cc2f87d337d1e585c17a3f703c4c9e0beca26bc0ec2e05b77d6f0c5',
-  operationName: 'SdkCreateOrgRouteManifestEntry',
-} as const satisfies PersistedOperation<unknown, object>;
+/** `SdkAddCouponCode` */
+export const SdkAddCouponCode: PersistedOperation<
+  SdkAddCouponCodeMutation,
+  SdkAddCouponCodeMutationVariables
+> = {
+  id: 'ac6c175b48af2f192e2c787da0a00124857bda6c74498c312ab09e9b6a0e1bee',
+  operationName: 'SdkAddCouponCode',
+};
 
-/** `SdkCreateSiteBundle` */
-export const CreateSiteBundle = {
-  id: '6b17eb0c680dba2308d45c4791bc87f960783d6421a54b989a28be9220448cac',
-  operationName: 'SdkCreateSiteBundle',
-} as const satisfies PersistedOperation<unknown, object>;
+/** `SdkCart` */
+export const SdkCart: PersistedOperation<
+  SdkCartQuery,
+  SdkCartQueryVariables
+> = {
+  id: 'ae824732a7529c86f9e8c796e5dad3782cd3ab09566f68fcc93b8d1b63af116c',
+  operationName: 'SdkCart',
+};
 
-/** `SdkFinalizeSiteBundle` */
-export const FinalizeSiteBundle = {
-  id: '7d0aed4b26f18449312247b689ee6ae2ab8994945bec29629652a736bd5fecaf',
-  operationName: 'SdkFinalizeSiteBundle',
-} as const satisfies PersistedOperation<unknown, object>;
+/** `SdkCatalog` */
+export const SdkCatalog: PersistedOperation<
+  SdkCatalogQuery,
+  SdkCatalogQueryVariables
+> = {
+  id: '338b108afc92c7a1a26832fe2edd3e966e40a5973c5e44391e0db8f23d1325c0',
+  operationName: 'SdkCatalog',
+};
+
+/** `SdkCoachingSession` */
+export const SdkCoachingSession: PersistedOperation<
+  SdkCoachingSessionQuery,
+  SdkCoachingSessionQueryVariables
+> = {
+  id: '43d9ac338189c0cc70dec177c50fc046a98c3dd0918833e097905def70be8c84',
+  operationName: 'SdkCoachingSession',
+};
+
+/** `SdkCompleteFreeOrder` */
+export const SdkCompleteFreeOrder: PersistedOperation<
+  SdkCompleteFreeOrderMutation,
+  SdkCompleteFreeOrderMutationVariables
+> = {
+  id: '414a5312c56a3d4e08c39c2779238ff0665b0232e256909dc1bf292e3c241beb',
+  operationName: 'SdkCompleteFreeOrder',
+};
+
+/** `SdkCourse` */
+export const SdkCourse: PersistedOperation<
+  SdkCourseQuery,
+  SdkCourseQueryVariables
+> = {
+  id: 'a49599fa63ab66ceae825ba4ee16e5533801cd7ad01cc429199fcda190c04e6e',
+  operationName: 'SdkCourse',
+};
+
+/** `SdkCreateOrder` */
+export const SdkCreateOrder: PersistedOperation<
+  SdkCreateOrderMutation,
+  SdkCreateOrderMutationVariables
+> = {
+  id: 'ecf6d4c2c1fe0c160a8a64ed44d187c389b5e585b0ef93262bbd20c238b7e97f',
+  operationName: 'SdkCreateOrder',
+};
+
+/** `SdkDigitalProduct` */
+export const SdkDigitalProduct: PersistedOperation<
+  SdkDigitalProductQuery,
+  SdkDigitalProductQueryVariables
+> = {
+  id: '0c69b23bbb8394c67e45ae8dc1cef8a736b721418dca256f147c72e0f7278447',
+  operationName: 'SdkDigitalProduct',
+};
+
+/** `SdkLiveEvent` */
+export const SdkLiveEvent: PersistedOperation<
+  SdkLiveEventQuery,
+  SdkLiveEventQueryVariables
+> = {
+  id: '6c4a5172bfa16a3fe8ff9abd67fbe285b005e639f4183a2ddfcb733f30eeba9e',
+  operationName: 'SdkLiveEvent',
+};
+
+/** `SdkMarkCartItemAsGift` */
+export const SdkMarkCartItemAsGift: PersistedOperation<
+  SdkMarkCartItemAsGiftMutation,
+  SdkMarkCartItemAsGiftMutationVariables
+> = {
+  id: 'e26d26421c1950c40b45619597d5b138cb0ff37016f93ba10635116273664307',
+  operationName: 'SdkMarkCartItemAsGift',
+};
+
+/** `SdkOrder` */
+export const SdkOrder: PersistedOperation<
+  SdkOrderQuery,
+  SdkOrderQueryVariables
+> = {
+  id: 'eb6886e783ba917bcef81667e74568f10f44c05c327741344d0826300995a625',
+  operationName: 'SdkOrder',
+};
 
 /** `SdkOrganizationIdBySlug` */
-export const OrganizationIdBySlug = {
+export const SdkOrganizationIdBySlug: PersistedOperation<
+  SdkOrganizationIdBySlugQuery,
+  SdkOrganizationIdBySlugQueryVariables
+> = {
   id: '8b2d500378479f3c374b2eec0bd6213569e3ee309036cfae04bcbe0ecb8d3c02',
   operationName: 'SdkOrganizationIdBySlug',
-} as const satisfies PersistedOperation<unknown, object>;
+};
 
-/** `SdkPinGeneratedPageEntity` */
-export const PinGeneratedPageEntity = {
-  id: '1754831a290698b9ad2e8501a26ee4493ff93fa35fce60ba6bac97ad292024a2',
-  operationName: 'SdkPinGeneratedPageEntity',
-} as const satisfies PersistedOperation<unknown, object>;
+/** `SdkRemoveCartOrderable` */
+export const SdkRemoveCartOrderable: PersistedOperation<
+  SdkRemoveCartOrderableMutation,
+  SdkRemoveCartOrderableMutationVariables
+> = {
+  id: '558c9d4bb275ca3eca4897341b60d4087b346c2c79938270b68bf736f38855ad',
+  operationName: 'SdkRemoveCartOrderable',
+};
 
-/** `SdkSignSiteBundleUpload` */
-export const SignSiteBundleUpload = {
-  id: '67607273c385a7721429b0ce86e4a6b99241f470cb63d8b4960d46370c4c262b',
-  operationName: 'SdkSignSiteBundleUpload',
-} as const satisfies PersistedOperation<unknown, object>;
-
-/** `SdkUnpinGeneratedPageEntity` */
-export const UnpinGeneratedPageEntity = {
-  id: '662e001108b6063ecf1f3c297cb72d548a1317b35c9b13b0c887fe296f433c25',
-  operationName: 'SdkUnpinGeneratedPageEntity',
-} as const satisfies PersistedOperation<unknown, object>;
+/** `SdkRemoveCouponCode` */
+export const SdkRemoveCouponCode: PersistedOperation<
+  SdkRemoveCouponCodeMutation,
+  SdkRemoveCouponCodeMutationVariables
+> = {
+  id: 'a133372ccfe60f0340835bc6efc3d6ad9124c769b7661bdd26db52d76c9f7d5b',
+  operationName: 'SdkRemoveCouponCode',
+};
 
 /** `SdkViewerSession` */
-export const ViewerSession = {
-  id: '8eea5ee62fa972dd98488327be4c480e1c8eeaa9038bca187ffbff3a6d5ae88d',
+export const SdkViewerSession: PersistedOperation<
+  SdkViewerSessionQuery,
+  SdkViewerSessionQueryVariables
+> = {
+  id: '5fc79cb8f72416d9697de53c4ddf5e50fad0f4966e1d65a9bf2bb5b018c4db98',
   operationName: 'SdkViewerSession',
-} as const satisfies PersistedOperation<unknown, object>;
+};

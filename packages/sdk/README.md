@@ -16,11 +16,6 @@ const client = new TeachfluenceClient({
 });
 ```
 
-> **Checkout is not in this release.** The hosted-checkout handoff needs a
-> backend mutation that does not exist yet. It will arrive as
-> `checkout.createSession()` returning a URL — the Stripe model — and never as
-> a payment form in your bundle.
-
 ## Keys
 
 Two kinds, and the difference matters.
@@ -28,7 +23,7 @@ Two kinds, and the difference matters.
 | | Where it lives | What it grants |
 |---|---|---|
 | `tf_pk_…` publishable | Your client bundle | Nothing an anonymous visitor could not already do |
-| `tf_sk_…` secret | Your server only | Organization-wide reads for build scripts and backends |
+| `tf_sk_…` secret | Your server only | Organization-wide reads **and site deploys** — it can replace what your website serves |
 
 A publishable key is **public by construction** — anyone who loads your site can
 read it. Treat it as an origin hint, never as a secret.
@@ -36,18 +31,114 @@ read it. Treat it as an origin hint, never as a secret.
 Passing a `tf_sk_` key to the SDK in a browser throws immediately rather than
 shipping to production and being scraped.
 
+## Catalog
+
+```ts
+const { organization } = await client.catalog.list({ first: 20 });
+
+for (const { node } of organization?.courses.edges ?? []) {
+  console.log(node.title, node.slug);
+}
+```
+
+One round trip returns courses, bundles, digital products and live events.
+Detail lookups take a slug:
+
+```ts
+const { course } = await client.catalog.course({ slug: 'react-101' });
+```
+
+**A course is not the thing you sell.** Its *academic terms* are — that is what
+carries a price, a capacity and its own availability, and it is a term id you
+put in the cart:
+
+```ts
+const term = course?.academicTerms[0];
+
+if (term?.viewerCanOrder) {
+  console.log(term.sellingPrice?.amount, term.sellingPrice?.currency);
+}
+```
+
+`client.catalog` also has `digitalProduct`, `liveEvent` and `coachingSession`.
+The organization slug comes from the client, so you never repeat it.
+
+## Cart
+
+The cart works for a signed-out visitor. Keep the `cartId` you get back —
+without it, every call starts a new cart.
+
+```ts
+const { addCartOrderable } = await client.cart.add({
+  organizationId: organization!.id,
+  orderableId: term.id,
+  cartId: localStorage.getItem('cartId'), // null on a first visit
+});
+
+localStorage.setItem('cartId', addCartOrderable.cart!.id);
+```
+
+Read it back, apply a coupon, mark a line as a gift:
+
+```ts
+const { organization: cart } = await client.cart.get({ cartId });
+
+await client.cart.addCoupon({ organizationId, couponCode: 'SPRING', cartId });
+await client.cart.remove({ organizationId, orderableId: term.id, cartId });
+```
+
+A signed-in visitor's cart is keyed on their session instead, and `cartId` is
+ignored.
+
+## Checkout
+
+Create an order, then send the buyer to the hosted payment page. You own
+everything up to the buy button.
+
+```ts
+const { createOrder } = await client.checkout.createOrder({
+  organizationId,
+  cartId,
+});
+const order = createOrder.order!;
+
+window.location.href = client.checkout.paymentUrl(order.slug);
+```
+
+`organizationId` is required on the cart path even though the schema types it
+nullable — an order has to name either an organization or a single orderable,
+and a cart order names the organization.
+
+That is the whole handoff. **The buyer never needs an account** — an order
+placed from an anonymous cart is readable at its own URL while payment is
+pending, which is what makes the redirect work.
+
+A free order skips payment entirely:
+
+```ts
+await client.checkout.completeFreeOrder({ orderId: order.id });
+```
+
 ## Sessions
 
 Authentication is a bearer token, not a cookie. Your site is a different origin
 from ours, so our session cookie is not sent to you — and widening it so that it
-would be is exactly the thing we will not do.
+would is exactly the thing we will not do.
 
 ```ts
 const client = new TeachfluenceClient({
   organizationSlug: 'your-org',
   getAccessToken: () => localStorage.getItem('tf_token'),
 });
+
+const { viewer } = await client.session.viewer();
+
+if (viewer?.__typename === 'User') console.log(viewer.email);
 ```
+
+**Signing in is not part of this release.** The SDK reads who the visitor is and
+sends a token you already hold; it does not yet issue one. Until it does, use
+the platform's own login and hand the token across.
 
 ## Errors
 
@@ -62,10 +153,10 @@ Three kinds, because you handle them differently:
 import { isUserError } from '@teachfluence/sdk';
 
 try {
-  await checkout.createSession({ promotionCode, returnUrl });
+  await client.cart.addCoupon({ organizationId, couponCode, cartId });
 } catch (error) {
   if (isUserError(error)) {
-    setFieldError(error.forField('promotionCode')?.message);
+    setFieldError(error.forField('couponCode')?.message);
     return;
   }
   throw error;
@@ -76,14 +167,31 @@ Business failures arrive inside a successful HTTP response, so the SDK raises
 them as their own error type — a caller that forgets to check cannot silently
 treat a declined payment as a success.
 
+`forField` takes the name of *your* form field. The API reports a path
+(`['input', 'couponCode']`); you should not have to know that the mutation
+wraps its arguments in an `input` object, so any segment matches.
+
+## Dropping to the raw operation
+
+Every method above is a thin wrapper over `execute()`, and the operations are
+exported. Reach for this when you want a call the namespaces do not wrap yet:
+
+```ts
+import { SdkAddCartOrderable } from '@teachfluence/sdk';
+
+await client.execute(SdkAddCartOrderable, { input: { organizationId, orderableId } });
+```
+
+Results are fully typed either way — the types are generated from the same
+schema the API serves.
+
 ## What this SDK will not do
 
 **Payments.** There is no payment form here and there will not be one. Checkout
 spans three providers, billing capture, promotions, gifting and Turkish
 invoicing rules; reimplementing it in your bundle would duplicate the most
 compliance-sensitive code on the platform somewhere neither of us wants it.
-When the handoff ships, `createSession()` hands you a URL — you own everything
-up to the buy button.
+`paymentUrl()` hands you a URL — that is the boundary.
 
 **Arbitrary queries.** Every call names an operation we publish. You cannot send
 your own GraphQL, which is what lets us keep the public surface equal to what we

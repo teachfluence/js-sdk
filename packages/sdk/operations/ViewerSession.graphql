@@ -4,13 +4,13 @@ query SdkViewerSession {
     ... on User {
       id
       email
-      firstName
+      givenName
       lastName
     }
     ... on OrganizationStudent {
       id
       email
-      firstName
+      givenName
       lastName
     }
   }

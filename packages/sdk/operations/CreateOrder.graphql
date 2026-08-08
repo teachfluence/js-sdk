@@ -1,0 +1,26 @@
+mutation SdkCreateOrder($input: CreateOrderInput!) {
+  createOrder(input: $input) {
+    order {
+      id
+      slug
+      status
+      sellingPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+      discountedPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

@@ -1,0 +1,20 @@
+query SdkLiveEvent($organizationSlug: String!, $slug: String!) {
+  liveEvent(organizationSlug: $organizationSlug, slug: $slug) {
+    id
+    title
+    slug
+    shortDescription
+    viewerCanOrder
+    viewerCanOrderAsGift
+    salesPaused
+    remainingCapacity
+    sellingPrice {
+      amount
+      currency
+    }
+    discountedPrice {
+      amount
+      currency
+    }
+  }
+}

@@ -1,0 +1,21 @@
+mutation SdkAddCouponCode($input: AddCouponCodeInput!) {
+  addCouponCode(input: $input) {
+    cart {
+      id
+      discountedPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+      promotions {
+        id
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

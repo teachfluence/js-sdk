@@ -21,8 +21,14 @@
 /** One entry from a mutation's `userErrors`. */
 export interface UserError {
   code: string;
+  /**
+   * PATH to the offending input field, not a name — the schema types this
+   * `[String!]!` and the API sends the whole path, e.g.
+   * `['input', 'couponCode']`. Declaring it as a string here is what made
+   * `forField` unable to match anything.
+   */
+  field: readonly string[];
   message: string;
-  field?: string | null;
 }
 
 export class TeachfluenceOperationError extends Error {
@@ -68,9 +74,17 @@ export class TeachfluenceUserError extends Error {
     Object.setPrototypeOf(this, TeachfluenceUserError.prototype);
   }
 
-  /** The error for a given form field, if the server attributed one. */
+  /**
+   * The error for a given form field, if the server attributed one.
+   *
+   * Matches a SEGMENT of the field path rather than the whole thing. The API
+   * reports where in the input the failure was — `['input', 'couponCode']` —
+   * but a caller is holding a form field called `couponCode` and should not
+   * have to know that the mutation wraps its arguments in an `input` object,
+   * nor reconstruct that path to ask a question about their own form.
+   */
   forField(field: string): UserError | undefined {
-    return this.userErrors.find((error) => error.field === field);
+    return this.userErrors.find((error) => error.field.includes(field));
   }
 }
 

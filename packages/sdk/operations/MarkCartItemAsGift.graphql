@@ -1,0 +1,24 @@
+mutation SdkMarkCartItemAsGift($input: MarkCartItemAsGiftInput!) {
+  markCartItemAsGift(input: $input) {
+    cart {
+      id
+      orderables {
+        isGift
+        giftRecipientEmail
+        giftRecipientName
+        giftGroupId
+        orderable {
+          __typename
+          ... on Node {
+            id
+          }
+        }
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

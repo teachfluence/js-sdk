@@ -1,0 +1,59 @@
+query SdkOrder($slug: String!) {
+  order(slug: $slug) {
+    id
+    slug
+    status
+    createdAt
+    sellingPrice {
+      presentmentMoney {
+        amount
+        currency
+      }
+    }
+    discountedPrice {
+      presentmentMoney {
+        amount
+        currency
+      }
+    }
+    lineItems {
+      id
+      discountedPrice {
+        presentmentMoney {
+          amount
+          currency
+        }
+      }
+      orderable {
+        __typename
+        ... on Node {
+          id
+        }
+        ... on CourseAcademicTerm {
+          title
+          slug
+        }
+        ... on Bundle {
+          title
+          slug
+        }
+        ... on DigitalProduct {
+          title
+          slug
+        }
+        ... on LiveEvent {
+          title
+          slug
+        }
+        ... on CoachingSessionPlan {
+          planName: name
+          slug
+        }
+        ... on OrgSubscriptionTier {
+          tierName: name
+          slug
+        }
+      }
+    }
+  }
+}

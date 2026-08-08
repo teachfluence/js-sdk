@@ -1,0 +1,14 @@
+mutation SdkCompleteFreeOrder($input: CompleteFreeOrderInput!) {
+  completeFreeOrder(input: $input) {
+    order {
+      id
+      slug
+      status
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
