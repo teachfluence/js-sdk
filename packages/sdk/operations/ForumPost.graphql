@@ -1,0 +1,81 @@
+query SdkForumPost(
+  $postId: ID!
+  $first: Int! = 20
+  $after: String
+  $sortOrder: ForumPostSortOrder = CREATED_ASC
+) {
+  node(id: $postId) {
+    __typename
+    ... on ForumPost {
+      id
+      slug
+      title
+      content
+      createdAt
+      status
+      positiveReactionCount: reactionCount(isPositive: true)
+      negativeReactionCount: reactionCount(isPositive: false)
+      viewerReaction {
+        id
+        isPositive
+      }
+      author {
+        __typename
+        ... on OrganizationStudent {
+          id
+          givenName
+          lastName
+          image
+        }
+        ... on OrganizationMember {
+          id
+          givenName
+          lastName
+          image
+        }
+      }
+      forum {
+        id
+        viewerCanComment
+        viewerCanReact
+      }
+      comments(first: $first, after: $after, sortOrder: $sortOrder) {
+        totalCount
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        edges {
+          cursor
+          node {
+            id
+            content
+            createdAt
+            status
+            positiveReactionCount: reactionCount(isPositive: true)
+            negativeReactionCount: reactionCount(isPositive: false)
+            viewerReaction {
+              id
+              isPositive
+            }
+            author {
+              __typename
+              ... on OrganizationStudent {
+                id
+                givenName
+                lastName
+                image
+              }
+              ... on OrganizationMember {
+                id
+                givenName
+                lastName
+                image
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

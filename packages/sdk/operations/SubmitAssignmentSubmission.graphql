@@ -1,0 +1,26 @@
+mutation SdkSubmitAssignmentSubmission($input: SubmitAssignmentSubmissionInput!) {
+  submitAssignmentSubmission(input: $input) {
+    assignmentSubmission {
+      id
+      status
+      freeResponseAnswer
+      grade
+      gradeFeedback
+      createdAt
+      submittedAt
+      gradedAt
+      attachments {
+        id
+        title
+        fileName
+        fileType
+        fileSize
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

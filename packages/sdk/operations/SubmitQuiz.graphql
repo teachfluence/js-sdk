@@ -1,0 +1,25 @@
+mutation SdkSubmitQuiz($input: SubmitQuizInput!) {
+  submitQuiz(input: $input) {
+    quizSubmission {
+      id
+      status
+      grade
+      gradeFeedback
+      selectedChoiceIndex
+      freeResponseAnswer
+      structuredAnswer
+      gradingDetails
+      submittedAt
+      selectedOption {
+        content
+        description
+        isCorrect
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

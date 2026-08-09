@@ -1,0 +1,36 @@
+query SdkCurriculum($termId: ID!) {
+  node(id: $termId) {
+    __typename
+    ... on CourseAcademicTerm {
+      id
+      title
+      slug
+      sections {
+        id
+        title
+        releaseDate
+        dripType
+        dripDaysDelay
+        items {
+          __typename
+          id
+          title
+          slug
+          typeLabel
+          freeAccess
+          hidden
+          viewerHasAccess
+          releaseDate
+          dripType
+          dripDaysDelay
+          viewerProgress {
+            id
+            progress
+            status
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+mutation SdkCreateForumPostComment($input: CreateForumPostCommentInput!) {
+  createForumPostComment(input: $input) {
+    forumPostComment {
+      id
+      content
+      createdAt
+      status
+      author {
+        __typename
+        ... on OrganizationStudent {
+          id
+          givenName
+          lastName
+          image
+        }
+        ... on OrganizationMember {
+          id
+          givenName
+          lastName
+          image
+        }
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

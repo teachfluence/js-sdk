@@ -22,6 +22,8 @@ import type {
   SdkAddCartOrderableMutationVariables,
   SdkAddCouponCodeMutation,
   SdkAddCouponCodeMutationVariables,
+  SdkAttachmentWatermarkJobQuery,
+  SdkAttachmentWatermarkJobQueryVariables,
   SdkCartQuery,
   SdkCartQueryVariables,
   SdkCatalogQuery,
@@ -30,14 +32,36 @@ import type {
   SdkCoachingSessionQueryVariables,
   SdkCompleteFreeOrderMutation,
   SdkCompleteFreeOrderMutationVariables,
+  SdkCourseItemDetailQuery,
+  SdkCourseItemDetailQueryVariables,
   SdkCourseQuery,
   SdkCourseQueryVariables,
+  SdkCreateDraftAssignmentSubmissionMutation,
+  SdkCreateDraftAssignmentSubmissionMutationVariables,
+  SdkCreateForumPostCommentMutation,
+  SdkCreateForumPostCommentMutationVariables,
+  SdkCreateForumPostMutation,
+  SdkCreateForumPostMutationVariables,
   SdkCreateOrderMutation,
   SdkCreateOrderMutationVariables,
+  SdkCurriculumQuery,
+  SdkCurriculumQueryVariables,
   SdkDigitalProductQuery,
   SdkDigitalProductQueryVariables,
+  SdkForumPostQuery,
+  SdkForumPostQueryVariables,
+  SdkForumQuery,
+  SdkForumQueryVariables,
+  SdkGetAttachmentUrlMutation,
+  SdkGetAttachmentUrlMutationVariables,
   SdkLiveEventQuery,
   SdkLiveEventQueryVariables,
+  SdkLoginWithOtpMutation,
+  SdkLoginWithOtpMutationVariables,
+  SdkLoginWithPasswordMutation,
+  SdkLoginWithPasswordMutationVariables,
+  SdkLogoutMutation,
+  SdkLogoutMutationVariables,
   SdkMarkCartItemAsGiftMutation,
   SdkMarkCartItemAsGiftMutationVariables,
   SdkOrderQuery,
@@ -48,6 +72,30 @@ import type {
   SdkRemoveCartOrderableMutationVariables,
   SdkRemoveCouponCodeMutation,
   SdkRemoveCouponCodeMutationVariables,
+  SdkRequestPasswordResetMutation,
+  SdkRequestPasswordResetMutationVariables,
+  SdkResetPasswordMutation,
+  SdkResetPasswordMutationVariables,
+  SdkSendLoginOtpMutation,
+  SdkSendLoginOtpMutationVariables,
+  SdkSubmitAssignmentSubmissionMutation,
+  SdkSubmitAssignmentSubmissionMutationVariables,
+  SdkSubmitQuizMutation,
+  SdkSubmitQuizMutationVariables,
+  SdkUpdateAssignmentSubmissionMutation,
+  SdkUpdateAssignmentSubmissionMutationVariables,
+  SdkUpdateCourseItemProgressMutation,
+  SdkUpdateCourseItemProgressMutationVariables,
+  SdkUpdateForumPostCommentReactionMutation,
+  SdkUpdateForumPostCommentReactionMutationVariables,
+  SdkUpdateForumPostReactionMutation,
+  SdkUpdateForumPostReactionMutationVariables,
+  SdkViewerCertificatesQuery,
+  SdkViewerCertificatesQueryVariables,
+  SdkViewerEnrollmentsQuery,
+  SdkViewerEnrollmentsQueryVariables,
+  SdkViewerOrdersQuery,
+  SdkViewerOrdersQueryVariables,
   SdkViewerSessionQuery,
   SdkViewerSessionQueryVariables,
 } from './types.js';
@@ -68,6 +116,15 @@ export const SdkAddCouponCode: PersistedOperation<
 > = {
   id: 'ac6c175b48af2f192e2c787da0a00124857bda6c74498c312ab09e9b6a0e1bee',
   operationName: 'SdkAddCouponCode',
+};
+
+/** `SdkAttachmentWatermarkJob` */
+export const SdkAttachmentWatermarkJob: PersistedOperation<
+  SdkAttachmentWatermarkJobQuery,
+  SdkAttachmentWatermarkJobQueryVariables
+> = {
+  id: 'b9220fd448447d6dbb600092e755407219588ae1a29966cccedea8983a398218',
+  operationName: 'SdkAttachmentWatermarkJob',
 };
 
 /** `SdkCart` */
@@ -115,6 +172,42 @@ export const SdkCourse: PersistedOperation<
   operationName: 'SdkCourse',
 };
 
+/** `SdkCourseItemDetail` */
+export const SdkCourseItemDetail: PersistedOperation<
+  SdkCourseItemDetailQuery,
+  SdkCourseItemDetailQueryVariables
+> = {
+  id: '891400cfe0141513870c835c5edd60869d230c361689043dfe2688f0f1f2dc6e',
+  operationName: 'SdkCourseItemDetail',
+};
+
+/** `SdkCreateDraftAssignmentSubmission` */
+export const SdkCreateDraftAssignmentSubmission: PersistedOperation<
+  SdkCreateDraftAssignmentSubmissionMutation,
+  SdkCreateDraftAssignmentSubmissionMutationVariables
+> = {
+  id: '7a3a9cbb1a7c3db069eda6b277db4a0c55d35a00751845a3a01343d3686584f4',
+  operationName: 'SdkCreateDraftAssignmentSubmission',
+};
+
+/** `SdkCreateForumPost` */
+export const SdkCreateForumPost: PersistedOperation<
+  SdkCreateForumPostMutation,
+  SdkCreateForumPostMutationVariables
+> = {
+  id: '5db523f57e943c95621f3f126634034603c052417ff36f952c4c7d2d1060b5cf',
+  operationName: 'SdkCreateForumPost',
+};
+
+/** `SdkCreateForumPostComment` */
+export const SdkCreateForumPostComment: PersistedOperation<
+  SdkCreateForumPostCommentMutation,
+  SdkCreateForumPostCommentMutationVariables
+> = {
+  id: '7eebdeff949f5b97971f5db1820b8a7f9ad0bcc22bad3866dd9aed314f21765a',
+  operationName: 'SdkCreateForumPostComment',
+};
+
 /** `SdkCreateOrder` */
 export const SdkCreateOrder: PersistedOperation<
   SdkCreateOrderMutation,
@@ -122,6 +215,15 @@ export const SdkCreateOrder: PersistedOperation<
 > = {
   id: 'ecf6d4c2c1fe0c160a8a64ed44d187c389b5e585b0ef93262bbd20c238b7e97f',
   operationName: 'SdkCreateOrder',
+};
+
+/** `SdkCurriculum` */
+export const SdkCurriculum: PersistedOperation<
+  SdkCurriculumQuery,
+  SdkCurriculumQueryVariables
+> = {
+  id: '772e7ea99dd2a0b5910a6328293a31e515c2ec77862995f13d448638b1d1b41a',
+  operationName: 'SdkCurriculum',
 };
 
 /** `SdkDigitalProduct` */
@@ -133,6 +235,33 @@ export const SdkDigitalProduct: PersistedOperation<
   operationName: 'SdkDigitalProduct',
 };
 
+/** `SdkForum` */
+export const SdkForum: PersistedOperation<
+  SdkForumQuery,
+  SdkForumQueryVariables
+> = {
+  id: 'c826b33b016085e2c30e51d64c24365c616c63f53d4802933c7bd17e7f8fef80',
+  operationName: 'SdkForum',
+};
+
+/** `SdkForumPost` */
+export const SdkForumPost: PersistedOperation<
+  SdkForumPostQuery,
+  SdkForumPostQueryVariables
+> = {
+  id: 'bb94242dbd89070ff0c49ccd0cc1646aa4c7e10257cc8241fd54e3068c7cfb76',
+  operationName: 'SdkForumPost',
+};
+
+/** `SdkGetAttachmentUrl` */
+export const SdkGetAttachmentUrl: PersistedOperation<
+  SdkGetAttachmentUrlMutation,
+  SdkGetAttachmentUrlMutationVariables
+> = {
+  id: '9c8352f6a2f0d1d0248dae55562bcfa3ba53a039f98d1a3a2f294901a197b985',
+  operationName: 'SdkGetAttachmentUrl',
+};
+
 /** `SdkLiveEvent` */
 export const SdkLiveEvent: PersistedOperation<
   SdkLiveEventQuery,
@@ -140,6 +269,33 @@ export const SdkLiveEvent: PersistedOperation<
 > = {
   id: '6c4a5172bfa16a3fe8ff9abd67fbe285b005e639f4183a2ddfcb733f30eeba9e',
   operationName: 'SdkLiveEvent',
+};
+
+/** `SdkLoginWithOtp` */
+export const SdkLoginWithOtp: PersistedOperation<
+  SdkLoginWithOtpMutation,
+  SdkLoginWithOtpMutationVariables
+> = {
+  id: 'b82ededb9e6f001e5de5b53199683aa375e65b64bb9c95ec45cdb1f444df0711',
+  operationName: 'SdkLoginWithOtp',
+};
+
+/** `SdkLoginWithPassword` */
+export const SdkLoginWithPassword: PersistedOperation<
+  SdkLoginWithPasswordMutation,
+  SdkLoginWithPasswordMutationVariables
+> = {
+  id: 'ae5e9e52c092a38eeaa5a472cc819705499ac107b3a586ba4ccb8a97bff3a2d1',
+  operationName: 'SdkLoginWithPassword',
+};
+
+/** `SdkLogout` */
+export const SdkLogout: PersistedOperation<
+  SdkLogoutMutation,
+  SdkLogoutMutationVariables
+> = {
+  id: 'e6cd829262271a3496a62ca54e1da7517e03dc6c76d9f21a50389806a5d25ba4',
+  operationName: 'SdkLogout',
 };
 
 /** `SdkMarkCartItemAsGift` */
@@ -185,6 +341,114 @@ export const SdkRemoveCouponCode: PersistedOperation<
 > = {
   id: 'a133372ccfe60f0340835bc6efc3d6ad9124c769b7661bdd26db52d76c9f7d5b',
   operationName: 'SdkRemoveCouponCode',
+};
+
+/** `SdkRequestPasswordReset` */
+export const SdkRequestPasswordReset: PersistedOperation<
+  SdkRequestPasswordResetMutation,
+  SdkRequestPasswordResetMutationVariables
+> = {
+  id: '14b1376b72b8e19e2e6bc6624fdaf55a7649001ab5773b44283ebd932472c25f',
+  operationName: 'SdkRequestPasswordReset',
+};
+
+/** `SdkResetPassword` */
+export const SdkResetPassword: PersistedOperation<
+  SdkResetPasswordMutation,
+  SdkResetPasswordMutationVariables
+> = {
+  id: '848f4c49a532a947721db45e47166ff02e2e3340b71718a6d1fd9b9966da86ca',
+  operationName: 'SdkResetPassword',
+};
+
+/** `SdkSendLoginOtp` */
+export const SdkSendLoginOtp: PersistedOperation<
+  SdkSendLoginOtpMutation,
+  SdkSendLoginOtpMutationVariables
+> = {
+  id: '7229971bbafa4d3c458ee5e4f01e4ad74bf6d98644e05b2c0e871d318364071f',
+  operationName: 'SdkSendLoginOtp',
+};
+
+/** `SdkSubmitAssignmentSubmission` */
+export const SdkSubmitAssignmentSubmission: PersistedOperation<
+  SdkSubmitAssignmentSubmissionMutation,
+  SdkSubmitAssignmentSubmissionMutationVariables
+> = {
+  id: '816629a1b89522cccd9181e785add67fbff6fb471339f1e423e92e1801d55853',
+  operationName: 'SdkSubmitAssignmentSubmission',
+};
+
+/** `SdkSubmitQuiz` */
+export const SdkSubmitQuiz: PersistedOperation<
+  SdkSubmitQuizMutation,
+  SdkSubmitQuizMutationVariables
+> = {
+  id: '4d1d07f71baafc4fc7df7dfd012cc0f95e08591b9bc243359f96a43431419e76',
+  operationName: 'SdkSubmitQuiz',
+};
+
+/** `SdkUpdateAssignmentSubmission` */
+export const SdkUpdateAssignmentSubmission: PersistedOperation<
+  SdkUpdateAssignmentSubmissionMutation,
+  SdkUpdateAssignmentSubmissionMutationVariables
+> = {
+  id: 'ddf3ed610960793ada110134069e059b10b3f2fac8c771915ccc974d31479452',
+  operationName: 'SdkUpdateAssignmentSubmission',
+};
+
+/** `SdkUpdateCourseItemProgress` */
+export const SdkUpdateCourseItemProgress: PersistedOperation<
+  SdkUpdateCourseItemProgressMutation,
+  SdkUpdateCourseItemProgressMutationVariables
+> = {
+  id: '3c4511f974f533ff7e553a49591b3ff09217f1d6e20854003dac5132a8d32dcf',
+  operationName: 'SdkUpdateCourseItemProgress',
+};
+
+/** `SdkUpdateForumPostCommentReaction` */
+export const SdkUpdateForumPostCommentReaction: PersistedOperation<
+  SdkUpdateForumPostCommentReactionMutation,
+  SdkUpdateForumPostCommentReactionMutationVariables
+> = {
+  id: '021480a62f20592dd67cf422a00da1727b5f998a10cb31cc7f9fd99d0ec3a7bf',
+  operationName: 'SdkUpdateForumPostCommentReaction',
+};
+
+/** `SdkUpdateForumPostReaction` */
+export const SdkUpdateForumPostReaction: PersistedOperation<
+  SdkUpdateForumPostReactionMutation,
+  SdkUpdateForumPostReactionMutationVariables
+> = {
+  id: '370abf6ce0c25a00309fb02686053667530c22ca00780eea21b8c3015433a4f1',
+  operationName: 'SdkUpdateForumPostReaction',
+};
+
+/** `SdkViewerCertificates` */
+export const SdkViewerCertificates: PersistedOperation<
+  SdkViewerCertificatesQuery,
+  SdkViewerCertificatesQueryVariables
+> = {
+  id: '8a10bce590896cc9aad0f0ca023656cce2208e05c8c4ee80df0071f2de9bcd0a',
+  operationName: 'SdkViewerCertificates',
+};
+
+/** `SdkViewerEnrollments` */
+export const SdkViewerEnrollments: PersistedOperation<
+  SdkViewerEnrollmentsQuery,
+  SdkViewerEnrollmentsQueryVariables
+> = {
+  id: 'a3847cd91d0bc600e9e654d8895e03f2920ebb347ea5ebec9b307bff9cf13f1e',
+  operationName: 'SdkViewerEnrollments',
+};
+
+/** `SdkViewerOrders` */
+export const SdkViewerOrders: PersistedOperation<
+  SdkViewerOrdersQuery,
+  SdkViewerOrdersQueryVariables
+> = {
+  id: 'f71c46306826fff95aadc2d8fef41bba60707bde61fd68d35b771200ac204ab9',
+  operationName: 'SdkViewerOrders',
 };
 
 /** `SdkViewerSession` */

@@ -1,0 +1,223 @@
+query SdkCourseItemDetail($itemId: ID!) {
+  node(id: $itemId) {
+    __typename
+    ... on CourseItem {
+      id
+      title
+      slug
+      typeLabel
+      freeAccess
+      hidden
+      viewerHasAccess
+      releaseDate
+      dripType
+      dripDaysDelay
+      attachments {
+        id
+        title
+        fileName
+        fileType
+        fileSize
+      }
+      viewerProgress {
+        id
+        progress
+        status
+        updatedAt
+      }
+    }
+    ... on VideoCourseItem {
+      video {
+        id
+        duration
+        status
+        url
+        posterUrl
+        chaptersVttUrl
+        captions {
+          language
+          label
+          status
+          url
+        }
+      }
+    }
+    ... on AudioCourseItem {
+      audio {
+        id
+        url
+        duration
+        status
+      }
+    }
+    ... on ArticleCourseItem {
+      content
+    }
+    ... on DocumentCourseItem {
+      description
+    }
+    ... on QuestionCourseItem {
+      description
+      question
+      hints
+    }
+    ... on QuizCourseItem {
+      description
+      allowSkip
+      allowRetake
+      quiz {
+        __typename
+        id
+        title
+        question
+        ... on MultipleChoiceQuiz {
+          options {
+            content
+            description
+            isCorrect
+          }
+        }
+        ... on FreeResponseQuiz {
+          sampleAnswer
+        }
+        ... on PhraseSelectionQuiz {
+          paragraph
+          minSelections
+          maxSelections
+          selectablePhrases {
+            phraseId
+            content
+          }
+        }
+        ... on CategorizationQuiz {
+          items {
+            id
+            content
+          }
+          groups {
+            id
+            content
+          }
+        }
+        ... on FillInBlankQuiz {
+          content
+          blanks {
+            blankId
+          }
+        }
+        ... on OrderingQuiz {
+          shuffleOnDisplay
+          items {
+            id
+            content
+          }
+        }
+        ... on MatchingQuiz {
+          leftItems {
+            id
+            content
+          }
+          rightItems {
+            id
+            content
+          }
+        }
+      }
+      viewerLatestSubmission {
+        id
+        status
+        grade
+        gradeFeedback
+        selectedChoiceIndex
+        freeResponseAnswer
+        structuredAnswer
+        gradingDetails
+        submittedAt
+        selectedOption {
+          content
+          description
+          isCorrect
+        }
+      }
+      viewerBestSubmission {
+        id
+        status
+        grade
+        submittedAt
+      }
+    }
+    ... on AssignmentCourseItem {
+      description
+      allowRichText
+      allowFileUpload
+      allowMultipleSubmissions
+      dueDate
+      lateSubmissionDeadline
+      viewerLatestAssignmentSubmission: viewerLatestSubmission {
+        id
+        status
+        freeResponseAnswer
+        grade
+        gradeFeedback
+        createdAt
+        submittedAt
+        gradedAt
+        attachments {
+          id
+          title
+          fileName
+          fileType
+          fileSize
+        }
+      }
+    }
+    ... on ExamCourseItem {
+      instructions
+      quizCount
+      timeLimitSeconds
+      passingGradePercentage
+      maxAttempts
+      allowPause
+      allowBack
+      allowSkip
+      viewerCanStartSession
+      viewerCurrentSession {
+        id
+      }
+      viewerLatestFinishedSession {
+        id
+      }
+    }
+    ... on EmbedCourseItem {
+      description
+      url
+    }
+    ... on LiveCourseItem {
+      description
+      url
+      platform
+      startDate
+      endDate
+    }
+    ... on FormCourseItem {
+      allowRetake
+      form {
+        id
+        title
+        slug
+      }
+    }
+    ... on ForumCourseItem {
+      forum {
+        id
+      }
+    }
+    ... on ScormCourseItem {
+      masteryScore
+      maxTimeAllowed
+    }
+    ... on Cmi5CourseItem {
+      auIri
+    }
+  }
+}

@@ -1,0 +1,15 @@
+mutation SdkGetAttachmentUrl($input: GetAttachmentUrlInput!) {
+  getAttachmentUrl(input: $input) {
+    url
+    watermarkJob {
+      id
+      status
+      url
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

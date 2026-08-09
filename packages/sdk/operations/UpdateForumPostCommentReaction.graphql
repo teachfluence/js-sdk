@@ -1,0 +1,21 @@
+mutation SdkUpdateForumPostCommentReaction(
+  $input: UpdateForumPostCommentReactionInput!
+) {
+  updateForumPostCommentReaction(input: $input) {
+    forumPostCommentReaction {
+      id
+      isPositive
+      updatedAt
+      postComment {
+        id
+        positiveReactionCount: reactionCount(isPositive: true)
+        negativeReactionCount: reactionCount(isPositive: false)
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

@@ -1,0 +1,23 @@
+query SdkViewerEnrollments {
+  viewer {
+    __typename
+    ... on OrganizationStudent {
+      id
+      enrollments {
+        id
+        accessSource
+        accessExpiresAt
+        courseAcademicTerm {
+          id
+          title
+          slug
+        }
+        progress {
+          overallProgress
+          completedItemsCount
+          totalItemsCount
+        }
+      }
+    }
+  }
+}

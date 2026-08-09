@@ -1,0 +1,9 @@
+mutation SdkLogout {
+  logout {
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

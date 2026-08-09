@@ -25,6 +25,12 @@ export type Currency =
   /** Qatari Riyal */
   | 'QAR';
 
+/** Content drip scheduling type */
+export type DripType =
+  | 'FIXED_DATE'
+  | 'DAYS_AFTER_ENROLLMENT'
+  | 'AFTER_ITEM_COMPLETION';
+
 /** Represents the order's status. */
 export type OrderStatus =
   /** The order is waiting for payment to be captured. */
@@ -49,12 +55,151 @@ export type OrderStatus =
   /** The order refund has been rejected. */
   | 'REFUND_REJECTED';
 
+/** The channel through which the OTP will be sent to the user for verification. */
+export type OtpChannel =
+  | 'EMAIL'
+  | 'SMS'
+  | 'WHATSAPP';
+
 /** How the gift will be delivered to the recipient */
 export type GiftDeliveryMethod =
   /** Send gift notification email to the recipient with redemption link */
   | 'EMAIL'
   /** Generate a shareable redemption link for the purchaser to share manually */
   | 'LINK';
+
+/** The source of access for a student to a course academic term */
+export type CourseAcademicTermStudentAccessSource =
+  | 'DIRECT'
+  | 'TAG';
+
+export type ItemProgressStatus =
+  | 'COMPLETED'
+  | 'IN_PROGRESS';
+
+/** Sort order for forum posts */
+export type ForumPostSortOrder =
+  /** Sort by created date in ascending order (oldest - newest) */
+  | 'CREATED_ASC'
+  /** Sort by created date in descending order (newest - oldest) */
+  | 'CREATED_DESC'
+  /** Sort by sum of reactions (upvotes - downvotes) in ascending order (least - most) */
+  | 'REACTION_ASC'
+  /** Sort by sum of reactions (upvotes - downvotes) in descending order (most - least) */
+  | 'REACTION_DESC'
+  /** Sort by algorithm */
+  | 'ALGORITHM';
+
+export type ForumPostStatus =
+  | 'AUTO_APPROVED'
+  | 'APPROVED'
+  | 'PENDING'
+  | 'REJECTED'
+  | 'NSFW'
+  | 'WARNING'
+  | 'BANNED'
+  | 'DELETED';
+
+/** Processing status of a video */
+export type VideoStatus =
+  /** Video is being processed/encoded */
+  | 'PROCESSING'
+  /** Video is ready for playback */
+  | 'READY'
+  /** Video processing failed */
+  | 'ERROR';
+
+export type AssignmentSubmissionStatus =
+  | 'DRAFT'
+  | 'GRADED'
+  | 'GRADE_PENDING';
+
+/** Processing status of an audio file */
+export type AudioStatus =
+  /** Audio is being uploaded or processed */
+  | 'PROCESSING'
+  /** Audio is ready for playback */
+  | 'READY'
+  /** Audio processing failed */
+  | 'ERROR';
+
+export type QuizSubmissionStatus =
+  | 'SKIPPED'
+  | 'GRADE_PENDING'
+  | 'GRADED'
+  | 'DRAFT';
+
+export type AttachmentWatermarkJobStatus =
+  | 'PROCESSING'
+  | 'READY';
+
+export type ForumReactionType =
+  | 'LIKE'
+  | 'UPVOTE_DOWNVOTE'
+  | 'DISABLED';
+
+/** Status of caption/subtitle generation */
+export type CaptionStatus =
+  /** Caption generation is pending */
+  | 'PENDING'
+  /** Caption is being generated */
+  | 'GENERATING'
+  /** Caption is ready for use */
+  | 'READY'
+  /** Caption generation failed */
+  | 'ERROR'
+  /** Caption is hidden from students */
+  | 'DISABLED';
+
+/** Status of a student certificate */
+export type StudentCertificateStatus =
+  /** Certificate is active and valid */
+  | 'ACTIVE'
+  /** Certificate has been revoked */
+  | 'REVOKED';
+
+export type SendLoginOtpInput = {
+  organizationId: string | number;
+  /** The channel through which the OTP will be sent to the user. */
+  channel: OtpChannel;
+  /** The identifier to send the OTP to. */
+  identifier: string;
+};
+
+export type LoginWithOtpInput = {
+  organizationId: string | number;
+  /** The channel through which the OTP will be sent to the user. */
+  channel: OtpChannel;
+  /** The identifier to send the OTP to. */
+  identifier: string;
+  /** The OTP to verify the user. */
+  otp: string;
+  /** The anonymous cart ID to merge into the user cart after login. */
+  cartId?: string | number | null | undefined;
+};
+
+export type LoginWithPasswordInput = {
+  organizationId: string | number;
+  /** The email address of the student account. */
+  email: string;
+  /** The password of the student account. */
+  password: string;
+  /** The anonymous cart ID to merge into the user cart after login. */
+  cartId?: string | number | null | undefined;
+};
+
+export type RequestStudentPasswordResetInput = {
+  organizationId: string | number;
+  /** The email address of the student account. */
+  email: string;
+};
+
+export type ResetStudentPasswordInput = {
+  /** The reset token from the password reset email. */
+  token: string;
+  /** The new password (minimum 8 characters). */
+  newPassword: string;
+};
 
 export type AddCartOrderableInput = {
   /** The organization id. */
@@ -190,6 +335,69 @@ export type CompleteFreeOrderInput = {
   orderId: string | number;
 };
 
+export type UpdateCourseItemProgressInput = {
+  itemId: string | number;
+  completed?: boolean | null | undefined;
+  /** Progress between 0 and 1 */
+  progress?: number | null | undefined;
+};
+
+export type CreateDraftAssignmentSubmissionInput = {
+  itemId: string | number;
+};
+
+export type UpdateAssignmentSubmissionInput = {
+  submissionId: string | number;
+  freeResponseAnswer?: AssignmentSubmissionFreeResponseAnswerInput | null | undefined;
+};
+
+/** The input when updating an assignment submission free response answer. Input type is used to allow for partial updates. Value will not be updated if input is null. */
+export type AssignmentSubmissionFreeResponseAnswerInput = {
+  value?: unknown;
+};
+
+export type SubmitAssignmentSubmissionInput = {
+  submissionId: string | number;
+};
+
+export type CreateForumPostInput = {
+  forumId: string | number;
+  content: unknown;
+  title: string;
+};
+
+export type CreateForumPostCommentInput = {
+  forumPostId: string | number;
+  content: unknown;
+};
+
+export type SubmitQuizInput = {
+  quizId: string | number;
+  courseId?: string | number | null | undefined;
+  itemId?: string | number | null | undefined;
+  inVideoQuizId?: string | number | null | undefined;
+  startedAt: string;
+  submission: Record<string, unknown>;
+};
+
+export type GetAttachmentUrlInput = {
+  attachmentId: string | number;
+  itemId?: string | number | null | undefined;
+  assignmentSubmissionId?: string | number | null | undefined;
+};
+
+export type UpdateForumPostReactionInput = {
+  forumPostId: string | number;
+  /** If true, means like/upvote. If false, means downvote. If null, means removing the reaction. */
+  isPositive?: boolean | null | undefined;
+};
+
+export type UpdateForumPostCommentReactionInput = {
+  forumPostCommentId: string | number;
+  /** If true, means like/upvote. If false, means downvote. If null, means removing the reaction. */
+  isPositive?: boolean | null | undefined;
+};
+
 export type SdkAddCartOrderableMutationVariables = Exact<{
   input: AddCartOrderableInput;
 }>;
@@ -210,6 +418,275 @@ export type SdkAddCouponCodeMutationVariables = Exact<{
 
 
 export type SdkAddCouponCodeMutation = { addCouponCode: { cart: { id: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } }, promotions: Array<{ id: string }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkAttachmentWatermarkJobQueryVariables = Exact<{
+  jobId: string | number;
+}>;
+
+
+export type SdkAttachmentWatermarkJobQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm' }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'Notification' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'Forum' }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem' }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video' }
+    | { __typename: 'VideoCourseItem' }
+    | { __typename: 'QuizCourseItem' }
+    | { __typename: 'AssignmentCourseItem' }
+    | { __typename: 'ArticleCourseItem' }
+    | { __typename: 'QuestionCourseItem' }
+    | { __typename: 'EmbedCourseItem' }
+    | { __typename: 'ExamCourseItem' }
+    | { __typename: 'LiveCourseItem' }
+    | { __typename: 'ForumCourseItem' }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem' }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem' }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem' }
+    | { __typename: 'FormCourseItem' }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'Gift' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob', id: string, status: AttachmentWatermarkJobStatus, url: string | null, createdAt: string }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost' }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'GeneratedPageEntityPin' }
+   | null };
 
 export type SdkCartQueryVariables = Exact<{
   organizationSlug: string;
@@ -258,12 +735,600 @@ export type SdkCourseQueryVariables = Exact<{
 
 export type SdkCourseQuery = { course: { id: string, title: string, slug: string, shortDescription: string | null, academicTerms: Array<{ id: string, title: string, slug: string, viewerCanOrder: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }> } | null };
 
+export type SdkCourseItemDetailQueryVariables = Exact<{
+  itemId: string | number;
+}>;
+
+
+export type SdkCourseItemDetailQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm' }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'Notification' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'Forum' }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video' }
+    | { __typename: 'VideoCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, video: { id: string, duration: number | null, status: VideoStatus, url: string | null, posterUrl: string | null, chaptersVttUrl: string | null, captions: Array<{ language: string, label: string, status: CaptionStatus, url: string | null }> } | null }
+    | { __typename: 'QuizCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, allowSkip: boolean, allowRetake: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, quiz:
+        | { __typename: 'MultipleChoiceQuiz', id: string, title: string, question: unknown, options: Array<{ content: unknown, description: unknown, isCorrect: boolean | null }> }
+        | { __typename: 'FreeResponseQuiz', sampleAnswer: unknown, id: string, title: string, question: unknown }
+        | { __typename: 'PhraseSelectionQuiz', paragraph: unknown, minSelections: number | null, maxSelections: number | null, id: string, title: string, question: unknown, selectablePhrases: Array<{ phraseId: string, content: unknown }> }
+        | { __typename: 'CategorizationQuiz', id: string, title: string, question: unknown, items: Array<{ id: string, content: unknown }>, groups: Array<{ id: string, content: unknown }> }
+        | { __typename: 'FillInBlankQuiz', content: unknown, id: string, title: string, question: unknown, blanks: Array<{ blankId: string }> }
+        | { __typename: 'OrderingQuiz', shuffleOnDisplay: boolean, id: string, title: string, question: unknown, items: Array<{ id: string, content: unknown }> }
+        | { __typename: 'MatchingQuiz', id: string, title: string, question: unknown, leftItems: Array<{ id: string, content: unknown }>, rightItems: Array<{ id: string, content: unknown }> }
+       | null, viewerLatestSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, gradeFeedback: unknown, selectedChoiceIndex: number | null, freeResponseAnswer: unknown, structuredAnswer: unknown, gradingDetails: unknown, submittedAt: string, selectedOption: { content: unknown, description: unknown, isCorrect: boolean | null } | null } | null, viewerBestSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, submittedAt: string } | null }
+    | { __typename: 'AssignmentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, allowRichText: boolean, allowFileUpload: boolean, allowMultipleSubmissions: boolean, dueDate: string | null, lateSubmissionDeadline: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, viewerLatestAssignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null }
+    | { __typename: 'ArticleCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, content: unknown, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'QuestionCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, question: unknown, hints: Array<unknown>, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'EmbedCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, url: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'ExamCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, instructions: unknown, quizCount: number | null, timeLimitSeconds: number | null, passingGradePercentage: number | null, maxAttempts: number | null, allowPause: boolean, allowBack: boolean, allowSkip: boolean, viewerCanStartSession: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, viewerCurrentSession: { id: string } | null, viewerLatestFinishedSession: { id: string } | null }
+    | { __typename: 'LiveCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, url: string | null, platform: string | null, startDate: string | null, endDate: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'ForumCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, forum: { id: string } | null }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, masteryScore: number | null, maxTimeAllowed: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, auIri: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, audio: { id: string, url: string | null, duration: number | null, status: AudioStatus } | null }
+    | { __typename: 'FormCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, allowRetake: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, form: { id: string, title: string, slug: string } | null }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'Gift' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob' }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost' }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'GeneratedPageEntityPin' }
+   | null };
+
+export type SdkCreateDraftAssignmentSubmissionMutationVariables = Exact<{
+  input: CreateDraftAssignmentSubmissionInput;
+}>;
+
+
+export type SdkCreateDraftAssignmentSubmissionMutation = { createDraftAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkCreateForumPostMutationVariables = Exact<{
+  input: CreateForumPostInput;
+}>;
+
+
+export type SdkCreateForumPostMutation = { createForumPost: { forumPost: { id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, author:
+        | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
+        | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
+       | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkCreateForumPostCommentMutationVariables = Exact<{
+  input: CreateForumPostCommentInput;
+}>;
+
+
+export type SdkCreateForumPostCommentMutation = { createForumPostComment: { forumPostComment: { id: string, content: unknown, createdAt: string, status: ForumPostStatus, author:
+        | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
+        | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
+       | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
 export type SdkCreateOrderMutationVariables = Exact<{
   input: CreateOrderInput;
 }>;
 
 
 export type SdkCreateOrderMutation = { createOrder: { order: { id: string, slug: string, status: OrderStatus, sellingPrice: { presentmentMoney: { amount: string, currency: Currency } }, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } } } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkCurriculumQueryVariables = Exact<{
+  termId: string | number;
+}>;
+
+
+export type SdkCurriculumQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm', id: string, title: string, slug: string, sections: Array<{ id: string, title: string, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, items: Array<
+          | { __typename: 'DocumentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'VideoCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'QuizCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'AssignmentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'ArticleCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'QuestionCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'EmbedCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'ExamCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'LiveCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'ForumCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'ScormCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'Cmi5CourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'AudioCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+          | { __typename: 'FormCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+        > }> }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'Notification' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'Forum' }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem' }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video' }
+    | { __typename: 'VideoCourseItem' }
+    | { __typename: 'QuizCourseItem' }
+    | { __typename: 'AssignmentCourseItem' }
+    | { __typename: 'ArticleCourseItem' }
+    | { __typename: 'QuestionCourseItem' }
+    | { __typename: 'EmbedCourseItem' }
+    | { __typename: 'ExamCourseItem' }
+    | { __typename: 'LiveCourseItem' }
+    | { __typename: 'ForumCourseItem' }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem' }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem' }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem' }
+    | { __typename: 'FormCourseItem' }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'Gift' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob' }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost' }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'GeneratedPageEntityPin' }
+   | null };
 
 export type SdkDigitalProductQueryVariables = Exact<{
   organizationSlug: string;
@@ -273,6 +1338,567 @@ export type SdkDigitalProductQueryVariables = Exact<{
 
 export type SdkDigitalProductQuery = { digitalProduct: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } | null };
 
+export type SdkForumQueryVariables = Exact<{
+  forumId: string | number;
+  first?: number;
+  after?: string | null | undefined;
+  sortOrder?: ForumPostSortOrder | null | undefined;
+  status?: Array<ForumPostStatus> | ForumPostStatus | null | undefined;
+}>;
+
+
+export type SdkForumQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm' }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'Notification' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'Forum', id: string, title: string, slug: string, description: unknown, viewerCanPost: boolean, viewerCanComment: boolean, viewerCanReact: boolean, effectiveSettings: { autoApprovePosts: boolean, autoApproveComments: boolean, postCreationEnabled: boolean, commentCreationEnabled: boolean, reactionType: ForumReactionType }, posts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, positiveReactionCount: number | null, negativeReactionCount: number | null, comments: { totalCount: number }, viewerReaction: { id: string, isPositive: boolean | null } | null, author:
+              | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
+              | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
+             | null } }> } }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem' }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video' }
+    | { __typename: 'VideoCourseItem' }
+    | { __typename: 'QuizCourseItem' }
+    | { __typename: 'AssignmentCourseItem' }
+    | { __typename: 'ArticleCourseItem' }
+    | { __typename: 'QuestionCourseItem' }
+    | { __typename: 'EmbedCourseItem' }
+    | { __typename: 'ExamCourseItem' }
+    | { __typename: 'LiveCourseItem' }
+    | { __typename: 'ForumCourseItem' }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem' }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem' }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem' }
+    | { __typename: 'FormCourseItem' }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'Gift' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob' }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost' }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'GeneratedPageEntityPin' }
+   | null };
+
+export type SdkForumPostQueryVariables = Exact<{
+  postId: string | number;
+  first?: number;
+  after?: string | null | undefined;
+  sortOrder?: ForumPostSortOrder | null | undefined;
+}>;
+
+
+export type SdkForumPostQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm' }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'Notification' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'Forum' }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem' }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video' }
+    | { __typename: 'VideoCourseItem' }
+    | { __typename: 'QuizCourseItem' }
+    | { __typename: 'AssignmentCourseItem' }
+    | { __typename: 'ArticleCourseItem' }
+    | { __typename: 'QuestionCourseItem' }
+    | { __typename: 'EmbedCourseItem' }
+    | { __typename: 'ExamCourseItem' }
+    | { __typename: 'LiveCourseItem' }
+    | { __typename: 'ForumCourseItem' }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem' }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem' }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem' }
+    | { __typename: 'FormCourseItem' }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'Gift' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob' }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost', id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, positiveReactionCount: number | null, negativeReactionCount: number | null, viewerReaction: { id: string, isPositive: boolean | null } | null, author:
+        | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
+        | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
+       | null, forum: { id: string, viewerCanComment: boolean, viewerCanReact: boolean }, comments: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, content: unknown, createdAt: string, status: ForumPostStatus, positiveReactionCount: number | null, negativeReactionCount: number | null, viewerReaction: { id: string, isPositive: boolean | null } | null, author:
+              | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
+              | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
+             | null } }> } }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'GeneratedPageEntityPin' }
+   | null };
+
+export type SdkGetAttachmentUrlMutationVariables = Exact<{
+  input: GetAttachmentUrlInput;
+}>;
+
+
+export type SdkGetAttachmentUrlMutation = { getAttachmentUrl: { url: string | null, watermarkJob: { id: string, status: AttachmentWatermarkJobStatus, url: string | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
 export type SdkLiveEventQueryVariables = Exact<{
   organizationSlug: string;
   slug: string;
@@ -280,6 +1906,25 @@ export type SdkLiveEventQueryVariables = Exact<{
 
 
 export type SdkLiveEventQuery = { liveEvent: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } | null };
+
+export type SdkLoginWithOtpMutationVariables = Exact<{
+  input: LoginWithOtpInput;
+}>;
+
+
+export type SdkLoginWithOtpMutation = { loginWithOtp: { credentials: { accessToken: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkLoginWithPasswordMutationVariables = Exact<{
+  input: LoginWithPasswordInput;
+}>;
+
+
+export type SdkLoginWithPasswordMutation = { loginWithPassword: { credentials: { accessToken: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkLogoutMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SdkLogoutMutation = { logout: { userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
 
 export type SdkMarkCartItemAsGiftMutationVariables = Exact<{
   input: MarkCartItemAsGiftInput;
@@ -336,6 +1981,97 @@ export type SdkRemoveCouponCodeMutationVariables = Exact<{
 
 
 export type SdkRemoveCouponCodeMutation = { removeCouponCode: { cart: { id: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } }, promotions: Array<{ id: string }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkRequestPasswordResetMutationVariables = Exact<{
+  input: RequestStudentPasswordResetInput;
+}>;
+
+
+export type SdkRequestPasswordResetMutation = { requestStudentPasswordReset: { userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkResetPasswordMutationVariables = Exact<{
+  input: ResetStudentPasswordInput;
+}>;
+
+
+export type SdkResetPasswordMutation = { resetStudentPassword: { credentials: { accessToken: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkSendLoginOtpMutationVariables = Exact<{
+  input: SendLoginOtpInput;
+}>;
+
+
+export type SdkSendLoginOtpMutation = { sendLoginOtp: { loginOtp: { channel: OtpChannel, email: string | null, validUntil: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkSubmitAssignmentSubmissionMutationVariables = Exact<{
+  input: SubmitAssignmentSubmissionInput;
+}>;
+
+
+export type SdkSubmitAssignmentSubmissionMutation = { submitAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkSubmitQuizMutationVariables = Exact<{
+  input: SubmitQuizInput;
+}>;
+
+
+export type SdkSubmitQuizMutation = { submitQuiz: { quizSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, gradeFeedback: unknown, selectedChoiceIndex: number | null, freeResponseAnswer: unknown, structuredAnswer: unknown, gradingDetails: unknown, submittedAt: string, selectedOption: { content: unknown, description: unknown, isCorrect: boolean | null } | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkUpdateAssignmentSubmissionMutationVariables = Exact<{
+  input: UpdateAssignmentSubmissionInput;
+}>;
+
+
+export type SdkUpdateAssignmentSubmissionMutation = { updateAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkUpdateCourseItemProgressMutationVariables = Exact<{
+  input: UpdateCourseItemProgressInput;
+}>;
+
+
+export type SdkUpdateCourseItemProgressMutation = { updateCourseItemProgress: { progress: { id: string, courseItemId: string, progress: number, status: ItemProgressStatus, firstProgressAt: string | null, updatedAt: string | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkUpdateForumPostCommentReactionMutationVariables = Exact<{
+  input: UpdateForumPostCommentReactionInput;
+}>;
+
+
+export type SdkUpdateForumPostCommentReactionMutation = { updateForumPostCommentReaction: { forumPostCommentReaction: { id: string, isPositive: boolean | null, updatedAt: string, postComment: { id: string, positiveReactionCount: number | null, negativeReactionCount: number | null } } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkUpdateForumPostReactionMutationVariables = Exact<{
+  input: UpdateForumPostReactionInput;
+}>;
+
+
+export type SdkUpdateForumPostReactionMutation = { updateForumPostReaction: { forumPostReaction: { id: string, isPositive: boolean | null, updatedAt: string, post: { id: string, positiveReactionCount: number | null, negativeReactionCount: number | null } } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+
+export type SdkViewerCertificatesQueryVariables = Exact<{
+  first?: number;
+  after?: string | null | undefined;
+  status?: StudentCertificateStatus | null | undefined;
+}>;
+
+
+export type SdkViewerCertificatesQuery = { studentCertificates: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, certificateNumber: string | null, issuedAt: string, revokedAt: string | null, status: StudentCertificateStatus, publicUrl: string, linkedInAddUrl: string | null, courseAcademicTerm: { id: string, title: string, slug: string } | null } }> } };
+
+export type SdkViewerEnrollmentsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SdkViewerEnrollmentsQuery = { viewer:
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationStudent', id: string, enrollments: Array<{ id: string, accessSource: CourseAcademicTermStudentAccessSource, accessExpiresAt: string | null, courseAcademicTerm: { id: string, title: string, slug: string } | null, progress: { overallProgress: number, completedItemsCount: number, totalItemsCount: number } | null }> }
+   | null };
+
+export type SdkViewerOrdersQueryVariables = Exact<{
+  first?: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SdkViewerOrdersQuery = { viewer:
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationStudent', id: string, orders: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, slug: string, status: OrderStatus, createdAt: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } } } }> } }
+   | null };
 
 export type SdkViewerSessionQueryVariables = Exact<{ [key: string]: never; }>;
 

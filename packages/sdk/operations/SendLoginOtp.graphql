@@ -1,0 +1,14 @@
+mutation SdkSendLoginOtp($input: SendLoginOtpInput!) {
+  sendLoginOtp(input: $input) {
+    loginOtp {
+      channel
+      email
+      validUntil
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

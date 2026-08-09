@@ -1,7 +1,7 @@
 {
   "name": "@teachfluence/sdk",
-  "version": "0.1.0",
-  "description": "Build your own frontend on Teachfluence — catalog, cart and hosted checkout.",
+  "version": "0.2.0",
+  "description": "Build your own frontend on Teachfluence — catalog, cart, checkout, sign-in, and the whole learning experience.",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -1,35 +1,82 @@
 import type {
   SdkAddCartOrderableMutationVariables,
   SdkAddCouponCodeMutationVariables,
+  SdkAttachmentWatermarkJobQueryVariables,
   SdkCartQueryVariables,
   SdkCatalogQueryVariables,
   SdkCoachingSessionQueryVariables,
   SdkCompleteFreeOrderMutationVariables,
+  SdkCourseItemDetailQueryVariables,
   SdkCourseQueryVariables,
+  SdkCreateDraftAssignmentSubmissionMutationVariables,
+  SdkCreateForumPostCommentMutationVariables,
+  SdkCreateForumPostMutationVariables,
   SdkCreateOrderMutationVariables,
+  SdkCurriculumQueryVariables,
   SdkDigitalProductQueryVariables,
+  SdkForumPostQueryVariables,
+  SdkForumQueryVariables,
+  SdkGetAttachmentUrlMutationVariables,
   SdkLiveEventQueryVariables,
+  SdkLoginWithOtpMutationVariables,
+  SdkLoginWithPasswordMutationVariables,
   SdkMarkCartItemAsGiftMutationVariables,
   SdkOrderQueryVariables,
   SdkRemoveCartOrderableMutationVariables,
   SdkRemoveCouponCodeMutationVariables,
+  SdkRequestPasswordResetMutationVariables,
+  SdkResetPasswordMutationVariables,
+  SdkSendLoginOtpMutationVariables,
+  SdkSubmitAssignmentSubmissionMutationVariables,
+  SdkSubmitQuizMutationVariables,
+  SdkUpdateAssignmentSubmissionMutationVariables,
+  SdkUpdateCourseItemProgressMutationVariables,
+  SdkUpdateForumPostCommentReactionMutationVariables,
+  SdkUpdateForumPostReactionMutationVariables,
+  SdkViewerCertificatesQueryVariables,
+  SdkViewerOrdersQueryVariables,
 } from './__generated__/types.js';
 
 import {
   SdkAddCartOrderable,
   SdkAddCouponCode,
+  SdkAttachmentWatermarkJob,
   SdkCart,
   SdkCatalog,
   SdkCoachingSession,
   SdkCompleteFreeOrder,
   SdkCourse,
+  SdkCourseItemDetail,
+  SdkCreateDraftAssignmentSubmission,
+  SdkCreateForumPost,
+  SdkCreateForumPostComment,
   SdkCreateOrder,
+  SdkCurriculum,
   SdkDigitalProduct,
+  SdkForum,
+  SdkForumPost,
+  SdkGetAttachmentUrl,
   SdkLiveEvent,
+  SdkLoginWithOtp,
+  SdkLoginWithPassword,
+  SdkLogout,
   SdkMarkCartItemAsGift,
   SdkOrder,
+  SdkOrganizationIdBySlug,
   SdkRemoveCartOrderable,
   SdkRemoveCouponCode,
+  SdkRequestPasswordReset,
+  SdkResetPassword,
+  SdkSendLoginOtp,
+  SdkSubmitAssignmentSubmission,
+  SdkSubmitQuiz,
+  SdkUpdateAssignmentSubmission,
+  SdkUpdateCourseItemProgress,
+  SdkUpdateForumPostCommentReaction,
+  SdkUpdateForumPostReaction,
+  SdkViewerCertificates,
+  SdkViewerEnrollments,
+  SdkViewerOrders,
   SdkViewerSession,
 } from './__generated__/operations.js';
 import {
@@ -135,6 +182,17 @@ function assertCheckoutOriginIsResolvable(
 }
 
 /**
+ * What a GraphQL `ID` accepts, mirroring the generated inputs exactly
+ * (`organizationId: string | number`).
+ *
+ * Deliberately NOT narrowed to `string` even though the client's own fill-in
+ * only ever produces one: the field is a caller-facing input, and an
+ * integrator holding a numeric id should not be forced to stringify it for a
+ * type we invented rather than the schema.
+ */
+type OrganizationId = number | string;
+
+/**
  * Variables minus the org slug, which the client already knows.
  *
  * The slug is REMOVED, not made optional. `execute()` always sends the
@@ -145,11 +203,66 @@ function assertCheckoutOriginIsResolvable(
  */
 type WithoutOrg<T> = Omit<T, 'organizationSlug'>;
 
+/**
+ * An input whose `organizationId` the client can fill in.
+ *
+ * Nearly every mutation needs the organization's id, but a client is
+ * constructed from its SLUG — so without this a caller had to resolve the id
+ * themselves and thread it through every call site, which is a round trip and
+ * a footgun for a value that never changes. Still accepted explicitly, so
+ * anything already passing it keeps working.
+ */
+type WithResolvedOrg<T extends { organizationId: OrganizationId }> = Omit<
+  T,
+  'organizationId'
+> & { organizationId?: OrganizationId };
+
 export class TeachfluenceClient {
   private readonly baseUrl: string;
   private readonly checkoutBaseUrl: string;
   private readonly doFetch: typeof globalThis.fetch;
   private readonly options: TeachfluenceClientOptions;
+  /**
+   * Resolved once and reused. The slug→id mapping cannot change for the life
+   * of a client, so re-resolving it per call would be a round trip spent on a
+   * constant. Cached as the PROMISE so concurrent first calls share one
+   * request rather than racing.
+   */
+  private organizationIdPromise: Promise<string> | null = null;
+
+  /**
+   * Assessed work.
+   *
+   * An assignment is a THREE-step flow, and the shape is deliberate: create a
+   * draft, update it as the student writes, then submit. Nothing is graded
+   * until submit, so a student can leave and come back — build the autosave
+   * around `update`, not around `submit`.
+   *
+   * Exam operations are not published yet. They are pending a backend audit of
+   * whether a timed exam's clock is the server's or the client's; publishing
+   * them before that answer would hand a custom frontend the time limit.
+   */
+  readonly assess = {
+    assignmentDraft: (
+      input: SdkCreateDraftAssignmentSubmissionMutationVariables['input'],
+    ) => this.execute(SdkCreateDraftAssignmentSubmission, { input }),
+    saveAssignment: (
+      input: SdkUpdateAssignmentSubmissionMutationVariables['input'],
+    ) => this.execute(SdkUpdateAssignmentSubmission, { input }),
+    submitAssignment: (
+      input: SdkSubmitAssignmentSubmissionMutationVariables['input'],
+    ) => this.execute(SdkSubmitAssignmentSubmission, { input }),
+    /**
+     * Answer a lesson quiz. The payload carries `selectedOption.isCorrect` —
+     * the verdict on the option they picked — so a result can be rendered
+     * without a second round trip, and without the whole answer key.
+     *
+     * `startedAt` is when the student opened the question; the server records
+     * it as time-spent. `submission` is the answer shaped for the quiz type.
+     */
+    submitQuiz: (input: SdkSubmitQuizMutationVariables['input']) =>
+      this.execute(SdkSubmitQuiz, { input }),
+  };
 
   /**
    * The cart, which works for a signed-out visitor.
@@ -159,18 +272,29 @@ export class TeachfluenceClient {
    * keyed on their session instead, so `cartId` is ignored there.
    */
   readonly cart = {
-    add: (input: SdkAddCartOrderableMutationVariables['input']) =>
-      this.execute(SdkAddCartOrderable, { input }),
-    addCoupon: (input: SdkAddCouponCodeMutationVariables['input']) =>
-      this.execute(SdkAddCouponCode, { input }),
+    add: async (
+      input: WithResolvedOrg<SdkAddCartOrderableMutationVariables['input']>,
+    ) =>
+      this.execute(SdkAddCartOrderable, { input: await this.withOrgId(input) }),
+    addCoupon: async (
+      input: WithResolvedOrg<SdkAddCouponCodeMutationVariables['input']>,
+    ) => this.execute(SdkAddCouponCode, { input: await this.withOrgId(input) }),
     get: (variables: WithoutOrg<SdkCartQueryVariables> = {}) =>
       this.execute(SdkCart, this.withOrg(variables)),
-    markAsGift: (input: SdkMarkCartItemAsGiftMutationVariables['input']) =>
-      this.execute(SdkMarkCartItemAsGift, { input }),
-    remove: (input: SdkRemoveCartOrderableMutationVariables['input']) =>
-      this.execute(SdkRemoveCartOrderable, { input }),
-    removeCoupon: (input: SdkRemoveCouponCodeMutationVariables['input']) =>
-      this.execute(SdkRemoveCouponCode, { input }),
+    markAsGift: async (
+      input: WithResolvedOrg<SdkMarkCartItemAsGiftMutationVariables['input']>,
+    ) =>
+      this.execute(SdkMarkCartItemAsGift, { input: await this.withOrgId(input) }),
+    remove: async (
+      input: WithResolvedOrg<SdkRemoveCartOrderableMutationVariables['input']>,
+    ) =>
+      this.execute(SdkRemoveCartOrderable, {
+        input: await this.withOrgId(input),
+      }),
+    removeCoupon: async (
+      input: WithResolvedOrg<SdkRemoveCouponCodeMutationVariables['input']>,
+    ) =>
+      this.execute(SdkRemoveCouponCode, { input: await this.withOrgId(input) }),
   };
 
   /**
@@ -209,8 +333,11 @@ export class TeachfluenceClient {
     completeFreeOrder: (
       input: SdkCompleteFreeOrderMutationVariables['input'],
     ) => this.execute(SdkCompleteFreeOrder, { input }),
-    createOrder: (input: SdkCreateOrderMutationVariables['input']) =>
-      this.execute(SdkCreateOrder, { input }),
+    createOrder: async (
+      input: WithResolvedOrg<
+        SdkCreateOrderMutationVariables['input'] & { organizationId: string }
+      >,
+    ) => this.execute(SdkCreateOrder, { input: await this.withOrgId(input) }),
     /**
      * Read an order back — a confirmation page, or polling for the payment to
      * settle after the buyer returns from the hosted page.
@@ -235,8 +362,141 @@ export class TeachfluenceClient {
       (options?.iframe ? '?iframe=true' : ''),
   };
 
-  /** Who the current visitor is, if anyone. */
+  /**
+   * Discussion attached to a course's forum item.
+   *
+   * MODERATION IS VISIBLE IN THE RESULT. A forum can require approval
+   * (`effectiveSettings.autoApprovePosts`), in which case a newly created post
+   * comes back `PENDING` rather than approved — it exists, but no one else can
+   * see it yet. Read `status` on what you get back and say so, or the author
+   * watches their post fail to appear and writes it again.
+   */
+  readonly forum = {
+    comment: (input: SdkCreateForumPostCommentMutationVariables['input']) =>
+      this.execute(SdkCreateForumPostComment, { input }),
+    /** A forum with a page of its posts, newest first. */
+    get: (variables: SdkForumQueryVariables) =>
+      this.execute(SdkForum, variables),
+    post: (input: SdkCreateForumPostMutationVariables['input']) =>
+      this.execute(SdkCreateForumPost, { input }),
+    /** One post and a page of its comments — the thread view. */
+    postDetail: (variables: SdkForumPostQueryVariables) =>
+      this.execute(SdkForumPost, variables),
+    /**
+     * Vote on a post or a comment. `isPositive: null` REMOVES the reaction —
+     * that is the toggle-off, not a third opinion.
+     *
+     * Whether a forum shows up/down or a single like is
+     * `effectiveSettings.reactionType`; render from that rather than assuming,
+     * and check `viewerCanReact` before showing the control at all.
+     */
+    reactToComment: (
+      input: SdkUpdateForumPostCommentReactionMutationVariables['input'],
+    ) => this.execute(SdkUpdateForumPostCommentReaction, { input }),
+    reactToPost: (
+      input: SdkUpdateForumPostReactionMutationVariables['input'],
+    ) => this.execute(SdkUpdateForumPostReaction, { input }),
+  };
+
+  /**
+   * Taking the course, once they own it.
+   *
+   * ACCESS IS THE SERVER'S DECISION, not yours. Every item carries
+   * `viewerHasAccess`, and a gated item's payload comes back NULL — a video
+   * item whose `video` is null means "not entitled", not "no video". Render
+   * from those fields rather than deciding entitlement yourself; the API will
+   * not hand you content the viewer has not earned, whatever your UI asks for.
+   */
+  readonly learn = {
+    /**
+     * Mint a download URL for an attachment. Items list their attachments by
+     * name and size only — the file itself is never a static URL, because the
+     * link is short-lived and minted per viewer.
+     *
+     * When the organization watermarks downloads, `url` comes back null and
+     * `watermarkJob` is `PROCESSING` instead: the personalized copy is still
+     * being made. Poll `attachmentWatermarkJob` until it is `READY` and use
+     * the url it carries.
+     */
+    attachmentUrl: (input: SdkGetAttachmentUrlMutationVariables['input']) =>
+      this.execute(SdkGetAttachmentUrl, { input }),
+    /** Poll a watermark job started by `attachmentUrl`. */
+    attachmentWatermarkJob: (
+      variables: SdkAttachmentWatermarkJobQueryVariables,
+    ) => this.execute(SdkAttachmentWatermarkJob, variables),
+    /** Sections and their items for a term — the lesson list, one round trip. */
+    curriculum: (variables: SdkCurriculumQueryVariables) =>
+      this.execute(SdkCurriculum, variables),
+    /** One item with its type-specific payload. */
+    item: (variables: SdkCourseItemDetailQueryVariables) =>
+      this.execute(SdkCourseItemDetail, variables),
+    /**
+     * Record progress. `progress` is a 0–1 fraction; `completed` marks the
+     * item done regardless. Returns the updated record so a UI can re-render
+     * without refetching the curriculum.
+     */
+    updateProgress: (
+      input: SdkUpdateCourseItemProgressMutationVariables['input'],
+    ) => this.execute(SdkUpdateCourseItemProgress, { input }),
+  };
+
+  /**
+   * What the signed-in visitor owns. Needs a token via `getAccessToken` — with
+   * none, `viewer` is null and both of these come back empty rather than
+   * failing, because an anonymous visitor having no orders is not an error.
+   */
+  readonly me = {
+    /**
+     * Earned certificates, for the signed-in student.
+     *
+     * `status` defaults to ACTIVE when omitted, and `null` means ALL — which is
+     * backwards from the guess. Omit it and a REVOKED certificate does not come
+     * back as revoked, it simply disappears from the list, so the two fields
+     * that describe that state (`status`, `revokedAt`) can never vary.
+     */
+    certificates: (variables: SdkViewerCertificatesQueryVariables = {}) =>
+      this.execute(SdkViewerCertificates, variables),
+    /** Enrolled course terms, with access source, expiry and progress. */
+    enrollments: () => this.execute(SdkViewerEnrollments, {}),
+    orders: (variables: SdkViewerOrdersQueryVariables = {}) =>
+      this.execute(SdkViewerOrders, variables),
+  };
+
+  /**
+   * Who the visitor is, and how they become someone.
+   *
+   * A successful login returns an ACCESS TOKEN — the SDK does not store it.
+   * Persist it however your site persists sessions and hand it back through
+   * the `getAccessToken` option; that separation is deliberate, because where
+   * a token is kept is a decision only the host application can make safely.
+   *
+   * Pass `cartId` on either login and the anonymous cart the visitor filled
+   * before signing in is carried onto their account, rather than disappearing
+   * at the moment they commit to buying.
+   */
   readonly session = {
+    loginWithOtp: async (
+      input: WithResolvedOrg<SdkLoginWithOtpMutationVariables['input']>,
+    ) => this.execute(SdkLoginWithOtp, { input: await this.withOrgId(input) }),
+    loginWithPassword: async (
+      input: WithResolvedOrg<SdkLoginWithPasswordMutationVariables['input']>,
+    ) =>
+      this.execute(SdkLoginWithPassword, { input: await this.withOrgId(input) }),
+    logout: () => this.execute(SdkLogout, {}),
+    /** Sends the reset mail. Succeeds whether or not the address exists. */
+    requestPasswordReset: async (
+      input: WithResolvedOrg<SdkRequestPasswordResetMutationVariables['input']>,
+    ) =>
+      this.execute(SdkRequestPasswordReset, {
+        input: await this.withOrgId(input),
+      }),
+    /** Completes a reset with the token from the mail, and signs them in. */
+    resetPassword: (input: SdkResetPasswordMutationVariables['input']) =>
+      this.execute(SdkResetPassword, { input }),
+    /** Emails or texts a one-time code. No password required anywhere. */
+    sendLoginOtp: async (
+      input: WithResolvedOrg<SdkSendLoginOtpMutationVariables['input']>,
+    ) => this.execute(SdkSendLoginOtp, { input: await this.withOrgId(input) }),
     viewer: () => this.execute(SdkViewerSession, {}),
   };
 
@@ -267,6 +527,22 @@ export class TeachfluenceClient {
   /** Fills in the organization slug the client was constructed with. */
   private withOrg<T>(variables: T): T & { organizationSlug: string } {
     return { ...variables, organizationSlug: this.options.organizationSlug };
+  }
+
+  /**
+   * Fills in `organizationId` unless the caller supplied one.
+   *
+   * Generic over the ARGUMENT rather than the result: `Omit` is not
+   * invertible, so a signature taking `WithResolvedOrg<T>` gives TypeScript
+   * nothing to infer `T` from and every call collapses to the constraint.
+   */
+  private async withOrgId<T extends { organizationId?: OrganizationId }>(
+    input: T,
+  ): Promise<T & { organizationId: OrganizationId }> {
+    return {
+      ...input,
+      organizationId: input.organizationId ?? (await this.organizationId()),
+    };
   }
 
   /**
@@ -373,6 +649,46 @@ export class TeachfluenceClient {
     throwIfUserErrors(data);
 
     return data;
+  }
+
+  /**
+   * The organization's id, resolved from the slug the client holds.
+   *
+   * Exposed because a few things genuinely need the raw id — building an
+   * input by hand for `execute()`, for instance — and making callers
+   * rediscover the lookup is how the id ended up threaded through every call
+   * site in the first place.
+   */
+  async organizationId(): Promise<string> {
+    this.organizationIdPromise ??= this.execute(SdkOrganizationIdBySlug, {
+      slug: this.options.organizationSlug,
+    })
+      .then((result) => {
+        if (!result.organization) {
+          throw new TeachfluenceTransportError(
+            `No organization is published at "${this.options.organizationSlug}". ` +
+              'Check the slug, and that the key belongs to that organization.',
+          );
+        }
+
+        return result.organization.id;
+      })
+      .catch((error: unknown) => {
+        // Uncache on EVERY failure, not just the not-found one.
+        //
+        // `??=` never reassigns a slot that already holds a promise, so a
+        // rejected one cached here is replayed for the life of the client —
+        // and this lookup sits in front of `cart.*`, `checkout.createOrder`
+        // and every `session.*` sign-in. A client is typically built once at
+        // module scope in a customer's SPA, so a single network blip at page
+        // load would leave the visitor unable to add to cart, sign in, or
+        // check out until they hard-reloaded the tab.
+        this.organizationIdPromise = null;
+
+        throw error;
+      });
+
+    return this.organizationIdPromise;
   }
 }
 

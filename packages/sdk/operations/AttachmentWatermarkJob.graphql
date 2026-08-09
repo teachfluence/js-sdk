@@ -1,0 +1,11 @@
+query SdkAttachmentWatermarkJob($jobId: ID!) {
+  node(id: $jobId) {
+    __typename
+    ... on AttachmentWatermarkJob {
+      id
+      status
+      url
+      createdAt
+    }
+  }
+}

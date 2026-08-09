@@ -1,0 +1,17 @@
+mutation SdkUpdateCourseItemProgress($input: UpdateCourseItemProgressInput!) {
+  updateCourseItemProgress(input: $input) {
+    progress {
+      id
+      courseItemId
+      progress
+      status
+      firstProgressAt
+      updatedAt
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

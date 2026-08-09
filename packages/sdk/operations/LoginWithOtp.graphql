@@ -1,0 +1,12 @@
+mutation SdkLoginWithOtp($input: LoginWithOtpInput!) {
+  loginWithOtp(input: $input) {
+    credentials {
+      accessToken
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
