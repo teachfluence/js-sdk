@@ -1,0 +1,64 @@
+query SdkOrderableJsonLdFacts($id: ID!) {
+  node(id: $id) {
+    __typename
+    id
+    ... on Orderable {
+      publicSaleState
+      sellingPrice {
+        amount
+        currency
+      }
+      discountedPrice {
+        amount
+        currency
+      }
+    }
+    ... on CourseAcademicTerm {
+      title
+      shortDescription
+      image
+      instructors {
+        hidden
+        instructor {
+          givenName
+          lastName
+          image
+        }
+      }
+    }
+    ... on DigitalProduct {
+      title
+      shortDescription
+      image
+    }
+    ... on Bundle {
+      title
+      shortDescription
+      image
+    }
+    ... on LiveEvent {
+      title
+      shortDescription
+      image
+      startDate
+      endDate
+      hasEnded
+      locationType
+      venueName
+      addressLine
+      city
+      course {
+        currentAcademicTerm {
+          instructors {
+            hidden
+            instructor {
+              givenName
+              lastName
+              image
+            }
+          }
+        }
+      }
+    }
+  }
+}

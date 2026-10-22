@@ -1,0 +1,18 @@
+mutation SdkDeleteCommunityComment($input: DeleteCommunityCommentInput!) {
+  deleteCommunityComment(input: $input) {
+    deletedCommunityCommentId
+    communityPost {
+      id
+      commentCount
+    }
+    parentComment {
+      id
+      replyCount
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

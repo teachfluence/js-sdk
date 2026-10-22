@@ -55,11 +55,356 @@ export type OrderStatus =
   /** The order refund has been rejected. */
   | 'REFUND_REJECTED';
 
+export type PaymentInterval =
+  | 'DAILY'
+  | 'WEEKLY'
+  | 'MONTHLY'
+  | 'YEARLY';
+
+/** Time window for a community event list. UPCOMING covers events that have not finished yet, so an event that has started but not ended is still upcoming; PAST is its exact complement; ALL applies no time filter. */
+export type CommunityEventTimeframe =
+  | 'UPCOMING'
+  | 'PAST'
+  | 'ALL';
+
+/** How the viewer is connected to the events being listed. */
+export type CommunityEventViewerRelation =
+  /** Events the viewer answered that they are attending. */
+  | 'GOING'
+  /** Events the viewer is waiting for a seat at. */
+  | 'WAITLISTED'
+  /** Events the viewer marked as a favorite, including ones that were cancelled. A favorite is private to its owner, reserves no seat, and is independent of any RSVP, so this list overlaps GOING and WAITLISTED only by coincidence. Where a `timeframe` argument is available it still defaults to UPCOMING: ask for `ALL` to include favorites that have already happened. */
+  | 'FAVORITED'
+  /** Events the viewer is attending or waiting for a seat at. Favorites are not included. */
+  | 'ANY';
+
+export type FormPublishStatus =
+  | 'PUBLIC'
+  | 'PRIVATE'
+  | 'ARCHIVED';
+
+export type FormType =
+  | 'MARKETING'
+  | 'REGISTRATION'
+  | 'LEARNING';
+
+/** The machine-readable reason a mutation refused. Switch on this to choose the message shown to the person, interpolating the values in the error's `params`; never show the error's `message`, which is an untranslated developer diagnostic. Treat an unrecognized code as a generic failure — new codes are added over time. */
+export type UserErrorCode =
+  /** Nobody is signed in, so the action could not be attempted. */
+  | 'UNAUTHENTICATED'
+  /** The signed-in person is not allowed to do this, and asking again or paying will not change that. */
+  | 'UNAUTHORIZED'
+  /** A value that was sent is not acceptable. */
+  | 'INVALID'
+  /** The thing being acted on does not exist, or is not visible. */
+  | 'NOT_FOUND'
+  /** Something with that value already exists. */
+  | 'UNIQUE'
+  /** The thing being acted on is not in a state where this action makes sense. Re-reading it and trying again usually resolves it. */
+  | 'CONFLICT'
+  /** A payment this organization started has not finished, so nothing may be written that a late answer from the payment provider could overwrite. Unlike CONFLICT, re-reading and retrying will not resolve it — the open attempt has to be closed first. */
+  | 'CHECKOUT_STILL_OPEN'
+  /** Something went wrong on our side. Nothing was changed. */
+  | 'INTERNAL_SERVER_ERROR'
+  /** This is behind a purchase the viewer has not made. Buying it grants the access, so an upsell is the right thing to show. */
+  | 'PAYMENT_REQUIRED'
+  /** The organization has not turned on the product area this action belongs to. There is nothing for the viewer to buy here, so do not show an upsell — an administrator has to switch the area on. */
+  | 'MODULE_DISABLED'
+  /** Another event is already scheduled at that exact time in the same space, so putting this session back would show the date twice. Point the organizer at the other event rather than offering a retry — nothing about this request will succeed until one of the two is removed. */
+  | 'COMMUNITY_EVENT_SLOT_TAKEN'
+  /** The organization does not accept new registrations, and this email is not on its student roster. Nothing the viewer can supply to this request succeeds, so do not offer a retry — the organization has to add them first. */
+  | 'REGISTRATION_DISABLED'
+  /** The viewer has no account and this coaching plan, which the organization lists as free, was never opted into accountless booking. Unlike an auth failure the door is not locked — it just needs an account — so send them to sign in or register and book again rather than showing a plain retry. */
+  | 'GUEST_BOOKING_NOT_ALLOWED'
+  /** The viewer has already taken this coaching plan as many times as its per-person limit allows — a free trial is the case this exists for. Nothing about the chosen slot is wrong, so do not offer another time: point them at the paid packages instead. */
+  | 'PLAN_PER_STUDENT_LIMIT_REACHED'
+  /** This bundle carries no price, so it cannot be bought. Nothing is wrong with the viewer, the timing or their account, and no retry helps: only the organization can set a price. Say the bundle is not on sale yet and point them at the organization, rather than reusing the sold-out or unavailable copy the other refusals on this field share. */
+  | 'BUNDLE_NOT_PRICED'
+  /** The organization does not offer email + password sign-in, so a password cannot be used or set for it. No password the viewer supplies succeeds, so do not offer a retry — point them at the sign-in methods the organization still accepts. */
+  | 'PASSWORD_AUTH_DISABLED'
+  /** The viewer has no email address on their account, and this action needs one to identify them. Nothing they sent is wrong and repeating the request will not help, so do not offer a retry — tell them to add an email address to their account first. */
+  | 'EMAIL_REQUIRED'
+  /** The discount does not cover what it was asked to apply to, so nothing was changed rather than a discount being silently kept, dropped, or ignored. `params.reason` says which case it was — `MIN_ORDER_AMOUNT` (with `minOrderAmount` and `currency`, the total to reach), `MIN_ORDERABLE_COUNT` (with `minOrderableCount` and `eligibleItemCount`), `NOT_APPLICABLE_TO_ITEMS` for a coupon that covers none of the items ordered, `INACTIVE`, `NOT_STARTED` or `EXPIRED` for a discount that is not running right now, or `SUBSCRIPTION_PLAN_CHANGE` for a discount a subscriber already has that does not extend to the plan they are moving to. */
+  | 'PROMOTION_NOT_APPLICABLE'
+  /** The person this was aimed at does not take part in points and badges, because the organization does not include their kind of membership. Nothing the caller sent is wrong and retrying will not help: either aim at somebody who takes part, or include that kind of membership in the community settings first. Distinct from UNAUTHORIZED, which is about the caller rather than the subject, and from NOT_FOUND, which would say the person does not exist. */
+  | 'GAMIFICATION_NOT_APPLICABLE'
+  /** The refund is blocked by policy right now, not by the caller lacking permission. The same person can usually still get it done through support. */
+  | 'REFUND_NOT_ALLOWED'
+  /** The action was attempted too often and was refused. `retryAfterSeconds` says how long to wait, and `params` carries the budget that was exceeded. */
+  | 'RATE_LIMITED'
+  /** A sync for this is already running. Wait for it to finish. */
+  | 'SYNC_IN_PROGRESS'
+  /** Syncs were requested too often. Try again later. */
+  | 'SYNC_RATE_LIMITED'
+  /** The sync could not be completed. */
+  | 'SYNC_FAILED'
+  /** The edit was saved, but part of the session's meeting setup could not be applied — a meeting that could not be shifted or cancelled to match, a verification or recording setting the host account cannot enforce. `message` names which. Returned alongside the updated result, so the saved change stands either way; whether anything can be done about the part that did not apply depends on which part it was, and a retry is not always it. */
+  | 'ZOOM_SYNC_FAILED'
+  /** The meeting provider could not provide what the request needed just now — a meeting to create, or a join link to issue — so nothing was saved and nobody was admitted. Distinct from a sync failure, where the session itself saved and only its meeting lagged behind: here there is no result at all. Everything that produces it is transient — a provider outage, a rate limit, an expired token — so trying again shortly is the one thing that helps, and no change to the request makes any difference. */
+  | 'MEETING_PROVISION_FAILED'
+  /** Attendee verification could not be turned on, because the account hosting this session cannot enforce it — so nothing was saved and the setting is unchanged. The way forward is to host on an account that supports it, or to leave verification off; retrying changes nothing. */
+  | 'ATTENDEE_VERIFICATION_UNAVAILABLE'
+  /** The edit was SAVED, but this campaign still carries a raw HTML body, and a raw HTML body is what gets sent — so the design just saved is not what recipients will receive. Returned alongside the saved result, never instead of it: shown as a plain failure it tells the author to save again, when saving again changes nothing. What resolves it is removing the HTML body, or deciding to keep it and knowing the design is not in use. */
+  | 'HTML_TEMPLATE_SHADOWS_DOCUMENT'
+  /** The deploy change was SAVED — which deploy serves which address is already recorded — but the edge that answers visitors has not accepted it yet, and a retry is running in the background. Same shape as ZOOM_SYNC_FAILED and returned for the same reason: shown as a plain failure it sends the author to publish again, when the only thing left to do is wait and re-read `siteServingStatus`. */
+  | 'SITE_EDGE_PUBLISH_PENDING'
+  /** The meeting provider will not issue this person a join link because their email address has no account with it. Creating one on that address fixes it; retrying without doing so cannot, and each attempt counts against a daily limit. */
+  | 'MEETING_REGISTRATION_REFUSED'
+  /** That subscription payment has already been settled. */
+  | 'SUBSCRIPTION_PAYMENT_ALREADY_SETTLED'
+  /** The certificate template does not exist. */
+  | 'CERTIFICATE_TEMPLATE_NOT_FOUND'
+  /** A certificate template already exists here. */
+  | 'CERTIFICATE_TEMPLATE_ALREADY_EXISTS'
+  /** The certificate template has been deleted. */
+  | 'CERTIFICATE_TEMPLATE_DELETED'
+  /** The certificate does not exist. */
+  | 'CERTIFICATE_NOT_FOUND'
+  /** A certificate has already been issued for this. */
+  | 'CERTIFICATE_ALREADY_ISSUED'
+  /** That certificate has already been revoked. */
+  | 'CERTIFICATE_ALREADY_REVOKED'
+  /** The student is not enrolled in this course. */
+  | 'NOT_ENROLLED_IN_COURSE'
+  /** The conditions that have to be satisfied first have not all been met yet. */
+  | 'ELIGIBILITY_NOT_MET'
+  /** The fields were configured in a way that cannot be used. */
+  | 'INVALID_FIELD_CONFIGURATION'
+  /** The criteria were configured in a way that cannot be used. */
+  | 'INVALID_CRITERIA_CONFIGURATION'
+  /** The exam's time limit ran out, so the answer was refused and the attempt was closed and graded on what had already been answered. There is nothing to retry — send the student to their results. */
+  | 'EXAM_TIME_LIMIT_EXCEEDED'
+  /** Every seat at the gathering is taken. A waiting-list place can be requested instead. */
+  | 'EVENT_FULL'
+  /** The gathering was cancelled and is no longer happening. */
+  | 'EVENT_CANCELLED'
+  /** The gathering has not been published yet, so it cannot be joined. */
+  | 'EVENT_NOT_PUBLISHED'
+  /** The gathering has already started, and this action is only possible beforehand. */
+  | 'EVENT_ALREADY_STARTED'
+  /** The gathering is sold as a paid product; a purchase replaces the answer. */
+  | 'EVENT_SOLD_SEPARATELY'
+  /** A waiting-list place was requested for an event with no capacity limit. */
+  | 'EVENT_NOT_CAPPED'
+  /** A waiting-list place was requested while seats remain. Take a seat instead. */
+  | 'EVENT_HAS_CAPACITY'
+  /** The gathering runs no waiting list, so there is no place to take. A gathering that still has seats answers EVENT_HAS_CAPACITY instead. */
+  | 'EVENT_WAITLIST_DISABLED'
+  /** This person already has a place, so nothing was changed. */
+  | 'ALREADY_ATTENDING'
+  /** Lost a concurrency race; safe to retry once. */
+  | 'CONCURRENT_UPDATE'
+  /** The link opens the video provider’s own page instead of playing the video, so it would show an empty player. Offer to upload the downloaded file instead, or to paste a link that plays the video directly. Re-entering the same address cannot help. */
+  | 'RECORDING_URL_NOT_PLAYABLE'
+  /** The request is correct and the viewer is entitled — it is simply too early. This one resolves on its own with time, so it should read as a countdown rather than an error. */
+  | 'NOT_YET_AVAILABLE'
+  /** Another import into this term is still running. Nothing was imported; the same import can succeed once that one has finished. */
+  | 'IMPORT_IN_PROGRESS'
+  /** The course the error’s field points at is archived, so this change cannot be made to it — for example, nothing can be imported into it. Nothing about the request can fix that short of restoring the course. */
+  | 'COURSE_ARCHIVED'
+  /** Content cannot be moved out of an archived course. It can be copied instead — offer that, since the same selection succeeds as a copy. */
+  | 'MOVE_FROM_ARCHIVED_COURSE'
+  /** Some of the selected items are of a kind the target product cannot hold, so the request as a whole was refused. Where the action also has a partial form (copying skips such items), offer that instead. */
+  | 'ITEM_TYPE_NOT_ALLOWED'
+  /** Something in the selection was changed or deleted while the import was running, so it was rolled back whole and nothing was imported. Unlike CONCURRENT_UPDATE, repeating the same request cannot help: the selection it names no longer describes what is there. Reload the source and choose again. */
+  | 'IMPORT_SOURCE_CHANGED'
+  /** The language of the video itself has not been confirmed yet, so no version in another language can be added. Ask for the original language first, then retry. */
+  | 'ORIGINAL_LANGUAGE_REQUIRED'
+  /** The language is not one of the languages the organization that owns the video supports. Offer only the supported languages; retrying with the same one cannot succeed until the organization adds it. */
+  | 'LANGUAGE_NOT_SUPPORTED'
+  /** The video already has a ready or still-processing version in this language. Offer to replace it; the existing version keeps playing until the replacement is ready. */
+  | 'LANGUAGE_VERSION_EXISTS'
+  /** This video cannot hold language versions, or cannot be used as one — for example it is hosted by an external provider, or it is itself a language version of another video. Nothing about the language chosen will change that. */
+  | 'INVALID_LANGUAGE_VERSION'
+  /** The video belongs to another organization, so its language versions can be viewed here but not changed. Replacing it with a video of your own lifts this. */
+  | 'LANGUAGE_VERSION_FOREIGN_VIDEO'
+  /** The video already has as many language versions as it can hold. `params.limit` is that number. Remove a version before adding another. */
+  | 'LANGUAGE_VERSION_LIMIT'
+  /** The mobile app is missing something a build needs, so no build was started. `params.issues` lists what is missing; fill those in and request the build again. */
+  | 'MOBILE_APP_NOT_READY'
+  /** Credentials cannot be stored securely right now, so nothing was saved. Retrying will not help until the platform is configured for it; contact support. */
+  | 'SECRET_STORAGE_UNAVAILABLE'
+  /** The account already uses as many devices as the organization allows. `params.reason` says which limit; the payload’s deviceLimit lists the devices and which may be replaced. Repeat the same request naming one of them to replace — the same code, link or password still works. */
+  | 'DEVICE_LIMIT_REACHED'
+  /** This device was removed or blocked, so it is signed out. `params.blocked` is true when the organization blocked it: signing in on it again is refused until the organization approves it. */
+  | 'DEVICE_REVOKED'
+  /** The organization approves new devices, and this one waits for approval. Nothing to retry until it is approved. */
+  | 'DEVICE_PENDING_APPROVAL'
+  /** The account has used the device changes it may make itself. `params.nextChangeAllowedAt` says when the next one is possible; when it is absent, only the organization can change devices. */
+  | 'DEVICE_CHANGE_NOT_ALLOWED'
+  /** The organization limits devices on its website too, and this request did not say which device it comes from. Send the device id header. */
+  | 'DEVICE_ID_REQUIRED'
+  /** This sign-in method is not offered for this organization or app right now; hide it and offer another. */
+  | 'SIGN_IN_METHOD_UNAVAILABLE'
+  /** The account is already watching on as many devices as the organization allows. `retryAfterSeconds` says when a slot frees up if the other device stops; the payload’s streamLimit carries the limit. */
+  | 'CONCURRENT_STREAM_LIMIT'
+  /** The account is scheduled for deletion, so the sign-in was refused. `params.scheduledFor` says when it will be deleted. While it can still be cancelled, the payload’s accountDeletion carries a cancellation ticket when this way of signing in can cancel it; a sign-in link cannot, so sign in with an email code or password to get one. When a ticket could not be issued this time, `retryAfterSeconds` says when to repeat the sign-in. After cancelling, repeat the sign-in — the same code, link or password still works. */
+  | 'ACCOUNT_DELETION_PENDING'
+  /** This action needs a recent sign-in. Request a confirmation code, then send the action again with it. */
+  | 'REAUTHENTICATION_REQUIRED'
+  /** The organization requires this device to prove it is genuine first. Have the app prove the device (createDeviceAttestationChallenge, then attestMyDevice), wait a moment, and repeat the request once. */
+  | 'DEVICE_ATTESTATION_REQUIRED'
+  /** This device cannot receive encrypted playback or save lessons: its integrity check failed, its security level is too low, or this kind of device does not offer it. Retrying will not help; explain it instead. */
+  | 'DEVICE_NOT_ELIGIBLE'
+  /** Saving lessons for offline viewing is not allowed here, by the course or the organization, or not offered right now. Hide the download button. */
+  | 'DOWNLOADS_NOT_ALLOWED'
+  /** In-app purchases are not offered for this organization or app right now. Hide the purchase option. */
+  | 'IAP_NOT_AVAILABLE'
+  /** The store purchase could not be confirmed as a genuine purchase of this app. Do not finish the store transaction; sending the same proof again will not help. */
+  | 'STORE_PURCHASE_NOT_VERIFIED'
+  /** This store purchase already belongs to another account of this organization, so it cannot be used here. The person should sign in with that account. */
+  | 'STORE_PURCHASE_OWNED_BY_ANOTHER_ACCOUNT'
+  /** The store product is not sold by this organization. Hide it; nothing the person can do will make it available. */
+  | 'STORE_PRODUCT_NOT_AVAILABLE'
+  /** The store could not be asked about this purchase right now. Keep the store transaction unfinished and send the same request again later. */
+  | 'STORE_VERIFICATION_UNAVAILABLE'
+  /** The subscription is billed by the App Store or Google Play, so it can only be changed or canceled there. Point the person to the store’s subscription settings. */
+  | 'MANAGED_BY_STORE'
+  /** This person cannot be blocked. `params.reason` says why: SELF (you cannot block yourself), STAFF (members of the organization team cannot be blocked, and what they write stays visible), or LIMIT (you have blocked as many people as allowed; `params.limit` is that number — unblock somebody first). */
+  | 'MEMBER_BLOCK_NOT_ALLOWED'
+  /** This calculation is written from a scoring dimension, so it cannot be edited or removed on its own. Change the points that dimension awards instead, or remove the dimension; editing the calculation directly would be overwritten the next time the points are saved. */
+  | 'FORM_CALCULATION_SCORING_MANAGED'
+  /** The calculation cannot be removed because a result page, an automation or another calculation still uses its result. The ones in the way are named in `params`; point them somewhere else first. Unlike CONCURRENT_UPDATE, repeating the request cannot help. */
+  | 'FORM_CALCULATION_IN_USE'
+  /** The dimension cannot be removed because a result page, an automation or another calculation still uses its score. The ones in the way are named in `params`; point them somewhere else first. Unlike CONCURRENT_UPDATE, repeating the request cannot help. */
+  | 'SCORING_DIMENSION_IN_USE'
+  /** Points cannot be awarded for this question yet. A points matrix scores CHOICES, so only a question that offers choices — one-of, or several-of — can take part; a question answered with free text, a date, a file or a number offers nothing to attach points to. */
+  | 'SCORING_QUESTION_NOT_SUPPORTED'
+  /** This question's choices have no identifiers yet, so points cannot be attached to them. Open the question and save it once — that gives its choices identifiers — then set the points again. */
+  | 'SCORING_OPTIONS_NOT_IDENTIFIED'
+  /** This question's type cannot be changed while a points matrix awards points for its choices. The points were set up for the kind of question it is now — whether one answer can be chosen or several — so changing it would leave that dimension scoring zero for every response, with nothing to say so. The dimensions in the way are named in `params`: clear this question's points on each of them first, then change the type and set the points again. */
+  | 'SCORING_QUESTION_TYPE_LOCKED'
+  /** The learning and community pages cannot show the organization's own site bar yet, because the header of its site has no navigation bar in it. Nothing was saved. Send the person to the site header editor to add one, then choose it again; retrying before that cannot succeed. */
+  | 'SITE_HEADER_NAVIGATION_MISSING'
+  /** A transactional automation email can only be emailed to the student, by an automation started by a purchase, a subscription change, a booking, an enrollment or a submission, and this change would use one anywhere else. Nothing was saved. `params.reason` says which rule: NOT_A_STUDENT_SEND (the action, `params.actionType`, emails someone other than the student), INELIGIBLE_TRIGGER (`params.triggerTypes` lists the triggers that cannot start one) or USED_BY_AUTOMATIONS (`params.automationNames` names automations that use the email in one of those ways, and `params.moreAutomationCount` says how many more do). Offer a marketing email instead, or the change that removes the conflict; retrying as-is cannot succeed. */
+  | 'TRANSACTIONAL_EMAIL_NOT_ALLOWED'
+  /** The organization is in İYS mode and the recipient has not given the consent to its commercial emails that İYS mode requires (for a merchant audience: they withdrew it), so this marketing email was refused. Nothing was sent. The person has to agree first, for example through the organization's consent prompt or a signup form; retrying as-is cannot succeed. */
+  | 'IYS_CONSENT_REQUIRED'
+  /** The student's subscription covers this coaching session but cannot fund a booking at this time. `params.reason` says which limit is in the way: WEEK_FULL or MONTH_FULL (the week's or month's included sessions are used up; `params.limit` is the cap and `params.windowEndsAt` when it resets — another week or month may still have room), OPEN_LIMIT (the student already holds as many upcoming subscription sessions as allowed; `params.unlocksAt` is when the next booking opens), or SUBSCRIPTION_ENDING (the subscription ends on `params.subscriptionEndsAt` and cannot fund a session after it). On a new booking a purchased session credit, if the student has one, is spent instead of refusing, so this means there was none; rescheduling a subscription-funded booking never falls back to a credit. */
+  | 'SUBSCRIPTION_BOOKING_LIMIT_REACHED'
+  /** This card cannot pay in installments, or not in this many. `params.reason` says why: NOT_A_CREDIT_CARD (a debit card) or NO_INSTALLMENT_PROGRAM (the card belongs to no installment program) — the card cannot pay in installments at all; CARD_PROGRAM_MISMATCH — the installment was priced for a different program than the card's, so choose the installment option again; EXCEEDS_CARD_INSTALLMENT_LIMIT or EXCEEDS_PAYMENT_METHOD_INSTALLMENT_LIMIT — more installments than the card or the payment method allows, so fewer may work; CARD_NOT_VERIFIED or INSTALLMENT_LIMIT_NOT_VERIFIED — the card or its installments could not be checked just now (`field` then ends in `binNumber`), so trying again shortly may also work. A single payment is open to the same card in every case, so offer that instead of a retry. */
+  | 'INSTALLMENTS_NOT_AVAILABLE'
+  /** The referral code entered is the person's own. A code can only be used by someone the code's owner invites, so nothing was applied; retrying with the same code cannot succeed. */
+  | 'REFERRAL_SELF'
+  /** The person cannot be referred: they already are, or have been, a paying subscriber of this organization, or they were already referred once. Nothing was applied; they can continue without the referral code. */
+  | 'REFERRAL_NOT_ELIGIBLE'
+  /** The referral code is not usable right now: the referral program is switched off or outside its dates, or the code owner no longer qualifies to refer. Nothing was applied; they can continue without the referral code. */
+  | 'REFERRAL_INACTIVE'
+  /** A document this request must include was not sent, so nothing was submitted. `params.documentType` names the missing document. Ask for that document, upload it, and send the request again; retrying as-is cannot succeed. */
+  | 'MISSING_DOCUMENT'
+  /** The request was already approved, rejected or withdrawn, so it cannot be decided again. Nothing was changed. Reload it to see its current status; retrying as-is cannot succeed. */
+  | 'ALREADY_DECIDED'
+  /** This change can only be made through a new verification request, so nothing was saved. Submit a verification request with the new details instead; retrying as-is cannot succeed. */
+  | 'VERIFICATION_REQUIRED'
+  /** The score thresholds of a module's question sets are not usable. The first set always starts at 0, and each later set must start at a whole-number percentage higher than the one before it, up to 100; a module also needs at least one set. Nothing was saved. Correct the threshold on the field named. */
+  | 'EXAM_STAGE_INVALID_BANDS'
+  /** This module decides which question set the next module serves, so every question in it has to be graded automatically — a question a person grades would leave the route undecided when the module ends. Nothing was saved. Use an automatically graded question here, or give the next module a single question set. */
+  | 'EXAM_STAGE_MANUAL_GRADING_IN_ROUTING_STAGE'
+  /** An exam with modules always asks every question of the route a student takes, so it cannot also be set to ask a random number of questions. Nothing was saved. Clear the question count, or turn the modules off. */
+  | 'EXAM_STAGE_QUIZ_COUNT_UNSUPPORTED'
+  /** The first module is the same for every student, so it has exactly one question set. Nothing was saved. Add alternative question sets to a later module instead. */
+  | 'EXAM_STAGE_FIRST_STAGE_SINGLE_VARIANT'
+  /** In an exam with modules every question belongs to one question set of one module. Nothing was saved. Choose the question set the question goes into. */
+  | 'EXAM_STAGE_VARIANT_REQUIRED'
+  /** The exam already has as many modules, or the module already has as many question sets, as allowed. `params.limit` is that number. Nothing was saved. Remove one first. */
+  | 'EXAM_STAGE_LIMIT_REACHED'
+  /** The module or question set still contains questions, so it cannot be removed. Nothing was removed. Move its questions to another question set, or delete them, first. */
+  | 'EXAM_STAGE_NOT_EMPTY'
+  /** The exam cannot be started yet, because one of its modules, or one of the question sets in a module, has no questions. No attempt was started and none was used up. The exam needs its questions added in the exam editor first; retrying before that cannot succeed. */
+  | 'EXAM_STAGE_PLAN_INCOMPLETE'
+  /** This exam is split into modules, and the app that sent the request did not declare that it can take such an exam. Nothing was changed. Take the exam on the web, or in an app version that supports exams with modules. */
+  | 'STAGED_EXAM_UNSUPPORTED_CLIENT'
+  /** The question belongs to a module of this exam that is already closed for this attempt: once the student moves on to the next module, the questions of the earlier modules can no longer be answered, flagged or changed. Nothing was saved. Continue with the questions of the current module. */
+  | 'EXAM_STAGE_CLOSED'
+  /** The template change was saved and current wording is used, but its cached copy still needs to be refreshed. This is a caveat beside a successful save or reset. */
+  | 'SYSTEM_EMAIL_TEMPLATE_CACHE_REFRESH_PENDING'
+  /** The test email was accepted for delivery, but its delivery record could not be updated. This is a caveat beside an accepted test; retrying the same request does not send another email. */
+  | 'SYSTEM_EMAIL_TEMPLATE_TEST_RECORD_PENDING'
+  /** People in this community cannot message each other directly here: the organization has turned direct messages off, its rules do not allow this conversation, one of the two has blocked the other, or one of them no longer belongs to the community. Nothing the caller sent is wrong and retrying will not help, so do not offer a retry or an upsell. */
+  | 'DIRECT_MESSAGES_NOT_ALLOWED'
+  /** The member already checked in for this period of the challenge, so nothing was posted. Show the entry they already posted; to post another one they take that one back first, while the period lasts. Retrying as-is cannot succeed. */
+  | 'ALREADY_CHECKED_IN'
+  /** Who can read what members record in this journey cannot change any more, because members have already enrolled under the current setting. Nothing was changed. Show the setting as fixed; retrying cannot succeed. */
+  | 'JOURNEY_VISIBILITY_LOCKED'
+  /** Members are enrolled in this journey, or have already recorded progress against this stage, task or metric, so it cannot be deleted. Nothing was changed. Archive the journey instead: it closes to new members and the enrolled keep what they recorded. */
+  | 'JOURNEY_ITEM_IN_USE'
+  /** The AI provider refused this API key. Nothing was saved. Check the key in the provider's console and enter it again. */
+  | 'AI_CREDENTIAL_INVALID'
+  /** The API key could not be checked with the AI provider right now: the provider was busy, did not answer in time, or refused the request for another reason (`params.reason`). Nothing was saved. Try again in a few minutes. */
+  | 'AI_PROVIDER_UNAVAILABLE'
+  /** The assistant cannot answer, because the organization's AI is not set up or its key stopped working. Only the organization's administrators can fix this. When the payload returns your message as `userMessage`, it was kept and can be sent again with `retryMessageId` once they have; otherwise nothing was sent. */
+  | 'AI_ASSISTANT_UNAVAILABLE'
+  /** The AI provider is busy or did not answer in time. Nothing was answered; try again in a moment. */
+  | 'AI_ASSISTANT_BUSY'
+  /** A monthly message limit is used up, and `params` says which one. Nothing was sent. The limit starts again next month, or an administrator can raise it. */
+  | 'AI_MESSAGE_LIMIT_REACHED'
+  /** The assistant was asked about a course the person cannot open. Nothing was sent. Ask about a course they have access to. */
+  | 'AI_COURSE_NOT_ACCESSIBLE'
+  /** The assistant's instructions contain text that tries to override its rules. Nothing was saved. Rephrase the instructions. */
+  | 'AI_PROMPT_REJECTED'
+  /** The member has not yet agreed to what this tool receives about them, or it has changed since they did. Nothing was opened. Show what the tool receives, record the agreement, then open it again; `params.disclosureVersion` is the version to agree to. */
+  | 'TOOL_ACKNOWLEDGEMENT_REQUIRED'
+  /** This organization requires single sign-on for the address used or the change asked for. When a sign-on url is returned alongside this error, send the person there rather than offering another sign-in method. Retrying the same way will refuse again. */
+  | 'SSO_REQUIRED'
+  /** Single sign-on was asked for, but this organization has no identity provider turned on. Nothing the person can do — an administrator has to finish the setup. */
+  | 'SSO_NOT_CONFIGURED'
+  /** The identity-provider settings supplied cannot be used as given. The fields at fault are named in the error. */
+  | 'SSO_CONFIG_INVALID'
+  /** Another organization has already proved control of this email domain. A domain belongs to one organization; there is nothing to retry. */
+  | 'DOMAIN_ALREADY_CLAIMED'
+  /** The verification record could not be found in this domain's DNS. Safe to retry once the record has been published and had time to propagate. */
+  | 'DOMAIN_VERIFICATION_FAILED'
+  /** This capability is part of the enterprise plan, which this organization is not on. Distinct from a module being switched off: upgrading is what unlocks it. */
+  | 'ENTERPRISE_PLAN_REQUIRED'
+  /** This person cannot be followed as a host. `params.reason` says why: SELF (you cannot follow yourself), BLOCKED (you have blocked this person), NOT_A_HOST (they host no gathering you can see), or LIMIT (you follow as many hosts as allowed; `params.limit` is that number — stop following somebody first). */
+  | 'HOST_FOLLOW_NOT_ALLOWED'
+  /** The recipient has unsubscribed from, or never signed up for, this kind of email, so nothing was sent. Send it to a different address; retrying with the same one cannot succeed. */
+  | 'RECIPIENT_UNSUBSCRIBED'
+  /** This address cannot receive email from the organization — for example, earlier mail to it bounced or was reported as spam, or it is unsubscribed from everything or blocked — so nothing was sent. Send it to a different address; retrying with the same one cannot succeed. */
+  | 'RECIPIENT_SUPPRESSED';
+
 /** The channel through which the OTP will be sent to the user for verification. */
 export type OtpChannel =
   | 'EMAIL'
   | 'SMS'
   | 'WHATSAPP';
+
+/** Status of a student organization subscription */
+export type StudentOrgSubscriptionStatus =
+  /** Awaiting first payment */
+  | 'PENDING'
+  /** In free trial period */
+  | 'TRIALING'
+  /** Currently active */
+  | 'ACTIVE'
+  /** Payment failed, in grace period */
+  | 'PAST_DUE'
+  /** User canceled (access continues until period end if cancelAtPeriodEnd) */
+  | 'CANCELED'
+  /** Grace period ended or subscription ended */
+  | 'EXPIRED';
+
+/** Where one membership stands in the space it belongs to. */
+export type CommunitySpaceMemberStatus =
+  /** The member can participate. Only ACTIVE rows are counted. */
+  | 'ACTIVE'
+  /** A moderator barred this member from this space. The row is retained so the ban keeps applying. */
+  | 'BANNED'
+  /** The access this membership depended on ended. The row is retained so re-subscribing restores the history, but the member is not counted and cannot participate. */
+  | 'LAPSED'
+  /** The member left the space voluntarily. */
+  | 'LEFT';
+
+/** How a device proves it is a genuine device running the app. */
+export type DeviceAttestationProvider =
+  /** No proof. */
+  | 'NONE'
+  /** Apple App Attest (iPhone and iPad). */
+  | 'APP_ATTEST'
+  /** Google Play Integrity (Android). */
+  | 'PLAY_INTEGRITY'
+  /** The machine identifier of a computer. Recorded, but it proves nothing. */
+  | 'MACHINE_ID';
 
 /** How the gift will be delivered to the recipient */
 export type GiftDeliveryMethod =
@@ -76,6 +421,31 @@ export type CourseAcademicTermStudentAccessSource =
 export type ItemProgressStatus =
   | 'COMPLETED'
   | 'IN_PROGRESS';
+
+/** Where a live event takes place. VIRTUAL events are attended through the platform and join URL; IN_PERSON events carry a venue. */
+export type LiveEventLocationType =
+  | 'VIRTUAL'
+  | 'IN_PERSON';
+
+export type CustomFieldDefinitionType =
+  /** Custom field with arbitrary JSON Schema validation. The validationSchema contains a JSON Schema. */
+  | 'JSON_SCHEMA'
+  /** Custom field for image uploads. The value is a URL string. The validationSchema may contain image-specific config such as aspectRatio. */
+  | 'IMAGE'
+  /** Custom field for multiple image uploads. The value is a JSON array of URL strings. The validationSchema may contain image-specific config such as aspectRatio and maxImages. */
+  | 'IMAGE_ARRAY'
+  /** Custom field linking to a form. */
+  | 'FORM';
+
+export type CustomFieldVisibility =
+  /** Visible to the student, to organization members, and to other viewers of the student record. Never shown on community profiles: use COMMUNITY for that. */
+  | 'PUBLIC'
+  /** Visible to the student and organization members. */
+  | 'PRIVATE'
+  /** Visible to organization members only. */
+  | 'HIDDEN'
+  /** Visible to the student, to organization members, and to the organization's community members on the student's community profile. Student custom fields only, and only for JSON_SCHEMA fields. */
+  | 'COMMUNITY';
 
 /** Sort order for forum posts */
 export type ForumPostSortOrder =
@@ -100,6 +470,11 @@ export type ForumPostStatus =
   | 'BANNED'
   | 'DELETED';
 
+export type FormSessionStatus =
+  | 'IN_PROGRESS'
+  | 'PAUSED'
+  | 'COMPLETED';
+
 /** Processing status of a video */
 export type VideoStatus =
   /** Video is being processed/encoded */
@@ -108,6 +483,12 @@ export type VideoStatus =
   | 'READY'
   /** Video processing failed */
   | 'ERROR';
+
+export type VideoSource =
+  | 'PI'
+  | 'YOUTUBE'
+  | 'VIMEO'
+  | 'URL';
 
 export type AssignmentSubmissionStatus =
   | 'DRAFT'
@@ -129,9 +510,122 @@ export type QuizSubmissionStatus =
   | 'GRADED'
   | 'DRAFT';
 
+/** Why the people in a community, or in one of its spaces, are not listed to the viewer. */
+export type CommunityMemberDirectoryWithheldReason =
+  /** This organization lists the people in its spaces only to its administrators. The setting is organization-wide, so joining a space does not change it. */
+  | 'ADMINISTRATORS_ONLY';
+
+export type CommunitySpaceMemberRole =
+  | 'MEMBER'
+  | 'MODERATOR';
+
+/** Feed ordering for community posts. CREATED_DESC: newest first (default). CREATED_ASC: oldest first. LAST_ACTIVITY_DESC: most recently active first. COMMENT_COUNT_DESC: most discussed first, counting every comment on a post — replies included, and comments still held for review or since refused. That is deliberately more than the comment number shown on a post, so the order will not always match those numbers read top to bottom. Ties break newest first. */
+export type CommunityPostSortOrder =
+  | 'CREATED_DESC'
+  | 'CREATED_ASC'
+  | 'LAST_ACTIVITY_DESC'
+  | 'COMMENT_COUNT_DESC';
+
+/** Moderation state of community content. AUTO_APPROVED: published without review. APPROVED: published by a reviewer. PENDING: awaiting review, visible only to its author and moderators. REJECTED: declined by a reviewer, visible only to its author and moderators. */
+export type CommunityModerationStatus =
+  | 'AUTO_APPROVED'
+  | 'APPROVED'
+  | 'PENDING'
+  | 'REJECTED';
+
+/** REGULAR: a member post. ANNOUNCEMENT: a highlighted post that only space moderators and organization staff can create. */
+export type CommunityPostType =
+  | 'REGULAR'
+  | 'ANNOUNCEMENT';
+
+/** Lifecycle state of a community event. DRAFT: visible only to moderators and staff. PUBLISHED: visible to members, open for RSVPs. CANCELLED: called off — stays visible so attendees see the cancellation. */
+export type CommunityEventStatus =
+  | 'DRAFT'
+  | 'PUBLISHED'
+  | 'CANCELLED';
+
+/** Where a community event takes place. VIRTUAL events carry a meeting URL; IN_PERSON events carry a free-form location text. */
+export type CommunityEventLocationType =
+  | 'VIRTUAL'
+  | 'IN_PERSON';
+
+/** A member's answer for a community event, plus the organizer's record of who actually came. */
+export type CommunityRsvpStatus =
+  /** The member said they will attend. */
+  | 'GOING'
+  /** The member declined. */
+  | 'NOT_GOING'
+  /** The organizer recorded this member as having attended. */
+  | 'ATTENDED'
+  /** The member said they would attend and the organizer recorded that they did not. */
+  | 'NO_SHOW';
+
+/** How often a recurring event repeats. */
+export type RecurrenceFrequency =
+  | 'DAILY'
+  | 'WEEKLY'
+  | 'MONTHLY';
+
+/** A day of the week a recurring event can fall on. */
+export type RecurrenceWeekday =
+  | 'SUNDAY'
+  | 'MONDAY'
+  | 'TUESDAY'
+  | 'WEDNESDAY'
+  | 'THURSDAY'
+  | 'FRIDAY'
+  | 'SATURDAY';
+
+/** For a monthly recurrence, whether occurrences land on a fixed day-of-month or on the Nth weekday of the month. */
+export type MonthlyRecurrenceMode =
+  | 'DAY_OF_MONTH'
+  | 'NTH_WEEKDAY';
+
+/** How a visitor can reach a community event. FREE: anyone signed in may attend, and attending also joins the community space. SUBSCRIPTION: an active subscription on one of the listed tiers is required first. MEMBERS_ONLY: the space is invitation-based and there is nothing a visitor can buy or join. */
+export type PublicCommunityEventAccess =
+  | 'FREE'
+  | 'SUBSCRIPTION'
+  | 'MEMBERS_ONLY';
+
+/** What to offer someone next when a community event would not take their answer. */
+export type CommunityRsvpRecovery =
+  /** Every seat is taken. Offer the waiting list, which fills the next seat that frees. */
+  | 'JOIN_WAITLIST'
+  /** The way in is bought, not answered: the gathering is sold on its own event page, or the space it lives in has to be unlocked first. */
+  | 'PURCHASE'
+  /** The gathering already counts this person as attending and has stopped taking answers. Send them to the gathering itself. */
+  | 'OPEN_MEETING'
+  /** Another answer landed first. Read the event again and repeat the write. */
+  | 'RETRY'
+  /** There is nothing to offer. */
+  | 'NONE';
+
+/** What a language version of a video is. */
+export type VideoLanguageVersionKind =
+  /** The video itself, in the language it was recorded in. Its video is the one the version list belongs to. */
+  | 'ORIGINAL'
+  /** A separate video uploaded for another language. It has its own captions and chapters. */
+  | 'RECORDING';
+
 export type AttachmentWatermarkJobStatus =
   | 'PROCESSING'
-  | 'READY';
+  | 'READY'
+  | 'FAILED';
+
+/** Scan state of a community attachment. PENDING: withheld while it waits to be scanned — visible only to whoever uploaded it, as a scanning state, and never with a download URL. RELEASED_UNSCANNED: readable and downloadable by everyone who can see the post or message, but no scan ever ran on it. A file larger than the scanner takes (a long video) stays this way; any other file is scanned if scanning is switched on later and, should it turn out to be malicious, it is withdrawn from everyone. CLEAN: scanned and safe, so everyone who can see the post or message can download it. INFECTED: flagged as malicious; the file is withheld from everyone and its stored copy is destroyed. ERROR: the file could not be scanned at all (or, too large to scan, its contents are not the video it was uploaded as) and stays withheld until a moderator asks for a fresh scan or removes it. */
+export type CommunityAttachmentScanStatus =
+  | 'PENDING'
+  | 'CLEAN'
+  | 'INFECTED'
+  | 'ERROR'
+  | 'RELEASED_UNSCANNED';
+
+/** POST: the file will be attached to a community post. CHAT_MESSAGE: the file will be attached to a chat message (roomId is required). CHECK_IN: the file is the picture of today's check-in in the space; only images are accepted. COMMENT: the file will be attached to a comment or reply on a community post (postId is required). */
+export type CommunityAttachmentTarget =
+  | 'POST'
+  | 'CHAT_MESSAGE'
+  | 'CHECK_IN'
+  | 'COMMENT';
 
 export type ForumReactionType =
   | 'LIKE'
@@ -151,6 +645,73 @@ export type CaptionStatus =
   /** Caption is hidden from students */
   | 'DISABLED';
 
+export type ContactFormQuestionType =
+  | 'FULL_NAME'
+  | 'GIVEN_NAME'
+  | 'LAST_NAME'
+  | 'EMAIL'
+  | 'PHONE'
+  | 'URL';
+
+export type DateFormQuestionType =
+  | 'DATE'
+  | 'TIME'
+  | 'DATETIME';
+
+/** Top-level public-surface chrome for a content category. Set per root category; subcategories inherit at render time. */
+export type ContentCategoryRenderMode =
+  | 'HELP_CENTER'
+  | 'ARTICLE'
+  | 'BLOG';
+
+/** Why a piece of community content was reported. */
+export type CommunityReportReason =
+  /** Unsolicited or repetitive promotional content. */
+  | 'SPAM'
+  /** Targeted abuse, bullying or threats against a person. */
+  | 'HARASSMENT'
+  /** Attacks a person or group over a protected characteristic. */
+  | 'HATE_SPEECH'
+  /** Threatens, incites or glorifies physical harm. */
+  | 'VIOLENCE'
+  /** Promotes suicide, self-injury or disordered eating. */
+  | 'SELF_HARM'
+  /** Sexually explicit or suggestive material. */
+  | 'SEXUAL_CONTENT'
+  /** Pretends to be another person, brand or organization. */
+  | 'IMPERSONATION'
+  /** Attempts to deceive members out of money or credentials. */
+  | 'SCAM_FRAUD'
+  /** Uses someone else's work without permission. */
+  | 'COPYRIGHT'
+  /** Presents demonstrably false claims as fact. */
+  | 'MISINFORMATION'
+  /** Breaks the community rules in a way none of the specific reasons covers. */
+  | 'INAPPROPRIATE'
+  /** Something else. The reporter explains in the accompanying note. */
+  | 'OTHER';
+
+/** A way to react to community content. */
+export type CommunityReactionKind =
+  /** A like. */
+  | 'LIKE'
+  /** Love. */
+  | 'LOVE'
+  /** A celebration. */
+  | 'CELEBRATE'
+  /** A laugh. */
+  | 'LAUGH'
+  /** Surprise. */
+  | 'WOW'
+  /** Thanks. */
+  | 'THANKS';
+
+/** Lifecycle state of a community content report. OPEN: awaiting review. RESOLVED: reviewed and acted on. DISMISSED: reviewed and declined. */
+export type CommunityReportStatus =
+  | 'OPEN'
+  | 'RESOLVED'
+  | 'DISMISSED';
+
 /** Status of a student certificate */
 export type StudentCertificateStatus =
   /** Certificate is active and valid */
@@ -158,12 +719,49 @@ export type StudentCertificateStatus =
   /** Certificate has been revoked */
   | 'REVOKED';
 
+/** The input when updating an organization student custom field. */
+export type OrganizationStudentCustomFieldInput = {
+  fieldDefinitionId: string | number;
+  value?: unknown;
+};
+
+export type RsvpToCommunityEventInput = {
+  eventId: string | number;
+  /** Your own answer: whether you are going, or not going. The attendance values are the organizer’s record of what actually happened and are refused here. */
+  status: CommunityRsvpStatus;
+  /** Client-generated token that makes this answer safe to retry. Sending the same value again for the same event returns the answer that was already recorded instead of recording a second one. */
+  clientMutationToken?: string | null | undefined;
+};
+
+export type MarkCommunitySpaceReadInput = {
+  spaceId: string | number;
+  /** The moment the viewer had caught up to. Defaults to now. The marker only ever moves forward, so an older value than the one already stored is kept as-is. */
+  readAt?: string | null | undefined;
+};
+
+/** One buyer answer to a checkout custom field. */
+export type CheckoutFieldResponseInput = {
+  fieldId: string;
+  /** The answer, typed by the field kind: a string, number, boolean, or list of strings. */
+  value: unknown;
+};
+
+export type JoinCommunitySpaceInput = {
+  spaceId: string | number;
+};
+
+export type LeaveCommunitySpaceInput = {
+  spaceId: string | number;
+};
+
 export type SendLoginOtpInput = {
   organizationId: string | number;
   /** The channel through which the OTP will be sent to the user. */
   channel: OtpChannel;
   /** The identifier to send the OTP to. */
   identifier: string;
+  /** Where the member was when they asked to sign in: a path on the organization's own site, such as /topluluk. The one-tap sign-in button in the email brings them back there. A path that is not on the site is left out of the email; the code is sent either way. At most 512 characters. */
+  returnPath?: string | null | undefined;
 };
 
 export type LoginWithOtpInput = {
@@ -176,6 +774,58 @@ export type LoginWithOtpInput = {
   otp: string;
   /** The anonymous cart ID to merge into the user cart after login. */
   cartId?: string | number | null | undefined;
+  /** Sign in from an app on this device: the answer carries an access token and a refresh token for the device, and no cookie. Leave it out on the website. */
+  device?: DeviceInput | null | undefined;
+  /** Website only: when the device limit was reached, one of the replaceableDeviceIds to remove so that this browser takes its place. Apps send device.replaceDeviceId instead. */
+  replaceDeviceId?: string | number | null | undefined;
+  /** Send true only when the person ticked a box, unticked by default, agreeing to receive this organization’s marketing emails; show the organization’s marketingConsentText next to it. Leave it out when they did not: signing up or signing in never requires it. Recorded for the person’s email address whether this sign-in creates the account or signs in an existing one, and only while the organization is in İYS mode (`OrganizationEmailSettings.iysModeEnabled`); ignored otherwise. Nothing new is recorded when the address already has consent on record. */
+  marketingConsent?: boolean | null | undefined;
+};
+
+/** The device the app signs in on. Signing in with a device returns an access token and a refresh token for this device, and no cookie. */
+export type DeviceInput = {
+  /** The app’s own identifier for this installation: 1 to 128 letters, digits, ".", "_", ":" or "-". Letter case does not matter. Send the same value in every request as the X-Device-Id header. */
+  deviceId: string;
+  kind: NativeDeviceKind;
+  platform: NativeDevicePlatform;
+  /** The name the device has for itself, at most 64 characters. */
+  name?: string | null | undefined;
+  /** The device model, at most 64 characters. */
+  model?: string | null | undefined;
+  /** The operating system version, at most 32 characters. */
+  osVersion?: string | null | undefined;
+  /** The app version, at most 32 characters. */
+  appVersion?: string | null | undefined;
+  /** A 64-character hexadecimal hash of the operating system’s identifier for the app vendor. Lets a reinstalled app keep its place instead of taking a new one. */
+  vendorIdHash?: string | null | undefined;
+  attestation?: DeviceAttestationInput | null | undefined;
+  /** When the device limit was reached: one of the replaceableDeviceIds to remove so that this device takes its place. Repeat the same sign-in with it. */
+  replaceDeviceId?: string | number | null | undefined;
+};
+
+/** What kind of device the app runs on. */
+export type NativeDeviceKind =
+  | 'PHONE'
+  | 'TABLET'
+  | 'COMPUTER';
+
+/** The operating system the app runs on. */
+export type NativeDevicePlatform =
+  | 'IOS'
+  | 'ANDROID'
+  | 'MACOS'
+  | 'WINDOWS'
+  | 'LINUX';
+
+/** Proof that the device is a genuine device running the app. It never affects signing in; it only decides access to DRM-protected playback and offline downloads. */
+export type DeviceAttestationInput = {
+  provider: DeviceAttestationProvider;
+  /** The challenge from createDeviceAttestationChallenge the proof was made for. Required for APP_ATTEST and PLAY_INTEGRITY. Each challenge works once, for five minutes. */
+  challenge?: string | null | undefined;
+  /** APP_ATTEST: the attestation object, base64. PLAY_INTEGRITY: the integrity token. */
+  token?: string | null | undefined;
+  /** APP_ATTEST: the key identifier, base64. */
+  keyId?: string | null | undefined;
 };
 
 export type LoginWithPasswordInput = {
@@ -186,6 +836,10 @@ export type LoginWithPasswordInput = {
   password: string;
   /** The anonymous cart ID to merge into the user cart after login. */
   cartId?: string | number | null | undefined;
+  /** Sign in from an app on this device: the answer carries an access token and a refresh token for the device, and no cookie. Leave it out on the website. */
+  device?: DeviceInput | null | undefined;
+  /** Website only: when the device limit was reached, one of the replaceableDeviceIds to remove so that this browser takes its place. Apps send device.replaceDeviceId instead. */
+  replaceDeviceId?: string | number | null | undefined;
 };
 
 export type RequestStudentPasswordResetInput = {
@@ -199,6 +853,10 @@ export type ResetStudentPasswordInput = {
   token: string;
   /** The new password (minimum 8 characters). */
   newPassword: string;
+  /** Sign in from an app on this device: the answer carries an access token and a refresh token for the device, and no cookie. Leave it out on the website. */
+  device?: DeviceInput | null | undefined;
+  /** Website only: when the device limit was reached, one of the replaceableDeviceIds to remove so that this browser takes its place. Apps send device.replaceDeviceId instead. */
+  replaceDeviceId?: string | number | null | undefined;
 };
 
 export type AddCartOrderableInput = {
@@ -206,8 +864,6 @@ export type AddCartOrderableInput = {
   organizationId: string | number;
   /** The orderable id (CourseAcademicTerm, CoachingSessionPlan, Bundle, or OrgSubscriptionTier). */
   orderableId: string | number;
-  /** Which duration of a subscription plan is being bought. Required when the orderable is an OrgSubscriptionTier: pass the id of one of the plan pricings, or of its lifetime pricing. Buying a plan for yourself is lifetime only; a recurring duration is sold as a gift. */
-  orgSubscriptionPricingId?: string | number | null | undefined;
   /** The cart id for anonymous users. If not provided, a new cart will be created. */
   cartId?: string | number | null | undefined;
   /** Whether this item is being purchased as a gift. */
@@ -218,10 +874,20 @@ export type AddCartOrderableInput = {
   giftGroupId?: string | null | undefined;
   /** Pre-selected coaching session slot for IN_HOUSE or Calendly coaching sessions (first session for multi-session plans). Note: The slot may become unavailable between cart addition and checkout. */
   selectedSlot?: SelectedSlotInput | null | undefined;
+  /** The customer's answers to the coaching session's booking questions, captured with the slot. Carried to the order and applied when the reservation is created. */
+  bookingFieldResponses?: Array<CheckoutFieldResponseInput> | null | undefined;
+  /** Which duration of a subscription plan is being bought. Required when the orderable is an OrgSubscriptionTier: pass the id of one of the plan pricings, or of its lifetime pricing. Buying a plan for yourself is lifetime only; a recurring duration is sold as a gift. */
+  orgSubscriptionPricingId?: string | number | null | undefined;
   /** Completed booking-form submission for a coaching session that requires one. Carried through to the booking and consumed on a per-booking requirement. */
   formSessionId?: string | number | null | undefined;
   /** Identifier of the browsing session this cart was created in. */
   browsingSessionId?: string | null | undefined;
+  /** Where the buyer found this product, when they added it from a recommendation: MANUAL or AUTOMATIC, as the recommendation reported it. Leave empty for any other add. ORDER_BUMP is refused. */
+  source?: RecommendationSource | null | undefined;
+  /** Where the recommendation was shown, as the recommendation reported it. Recorded only together with source; a value that does not fit is ignored, never refused. */
+  placement?: RecommendationRailPlacement | null | undefined;
+  /** Why the product was recommended, as the recommendation reported it. Recorded only together with source; a value that does not fit is ignored, never refused. */
+  strategy?: RecommendationStrategy | null | undefined;
 };
 
 export type GiftDetailsInput = {
@@ -303,9 +969,15 @@ export type CreateOrderInput = {
   currency?: Currency | null | undefined;
   /** The price group the buyer claims for this order (e.g. a student discount). Eligible line items are charged that group price; others keep their regular price. */
   priceGroupId?: string | number | null | undefined;
-  /** Whether this order is a gift purchase. If true, giftDetails must be provided. DEPRECATED: Use gifts[] array instead for multi-item gift support. */
+  /**
+   * Whether this order is a gift purchase. If true, giftDetails must be provided.
+   * @deprecated Use the gifts[] array instead, for multi-item gift support.
+   */
   isGift?: boolean | null | undefined;
-  /** Details about the gift including delivery method and recipient info. Required when isGift is true. DEPRECATED: Use gifts[] array instead for multi-item gift support. */
+  /**
+   * Details about the gift including delivery method and recipient info. Required when isGift is true.
+   * @deprecated Use the gifts[] array instead, for multi-item gift support.
+   */
   giftDetails?: GiftDetailsInput | null | undefined;
   /** Array of gift recipients with their associated line items. Use this for multi-item gifts, mixed orders (some items for self, some as gifts), and multi-recipient orders. Each gift recipient can have multiple line items specified by lineItemIndices. */
   gifts?: Array<GiftRecipientInput> | null | undefined;
@@ -313,8 +985,20 @@ export type CreateOrderInput = {
   selectedSlot?: SelectedSlotInput | null | undefined;
   /** Completed booking-form submission for a direct CoachingSessionPlan order whose session requires a form. For cart orders this is stored on the cart item. */
   formSessionId?: string | number | null | undefined;
+  /** The customer's answers to the coaching session's booking questions, for a direct order that also picks a slot. For cart orders these are stored on the cart item. */
+  bookingFieldResponses?: Array<CheckoutFieldResponseInput> | null | undefined;
   /** Identifier of the browsing session this checkout occurred in. */
   browsingSessionId?: string | null | undefined;
+  /** The visitor's own anonymous token, the same one the page-view beacon and the social-post click endpoint carry. Used only to find how this buyer arrived (the traffic source and any tracked link); never stored, and only its hash is ever compared. */
+  visitorToken?: string | null | undefined;
+  /** Send true only when the buyer ticked a box, unticked by default, agreeing to receive this organization’s marketing emails; show the organization’s marketingConsentText next to it. Leave it out when they did not: buying never requires it. Recorded for the buyer’s email address, and only while the organization is in İYS mode (`OrganizationEmailSettings.iysModeEnabled`); ignored otherwise. Honoured here for a signed-in buyer; a guest sends it with their email on updateOrder. */
+  marketingConsent?: boolean | null | undefined;
+  /** Where the buyer found this product, when they are buying it straight from a recommendation: MANUAL or AUTOMATIC, as the recommendation reported it. Only with orderableId; an order from the cart takes it from each cart item. ORDER_BUMP is refused. */
+  source?: RecommendationSource | null | undefined;
+  /** Where the recommendation was shown, as the recommendation reported it. Recorded only together with source; a value that does not fit is ignored, never refused. */
+  placement?: RecommendationRailPlacement | null | undefined;
+  /** Why the product was recommended, as the recommendation reported it. Recorded only together with source; a value that does not fit is ignored, never refused. */
+  strategy?: RecommendationStrategy | null | undefined;
 };
 
 export type GiftRecipientInput = {
@@ -335,10 +1019,40 @@ export type CompleteFreeOrderInput = {
   orderId: string | number;
 };
 
+export type StartFormSessionInput = {
+  formId: string | number;
+  itemId?: string | number | null | undefined;
+  organizationId?: string | number | null | undefined;
+  utmSource?: string | null | undefined;
+  utmMedium?: string | null | undefined;
+  utmCampaign?: string | null | undefined;
+  referrer?: string | null | undefined;
+  browsingSessionId?: string | null | undefined;
+  visitorToken?: string | null | undefined;
+};
+
+export type SubmitFormQuestionsInput = {
+  formSessionId: string | number;
+  submissions: Array<SubmitFormQuestionsSubmissionInput>;
+  /** If provided, a copy of the submitted responses is emailed to this address. */
+  sendResponseCopyToEmail?: string | null | undefined;
+};
+
+export type SubmitFormQuestionsSubmissionInput = {
+  /** ID of the form question */
+  formQuestionId: string | number;
+  /** Start time of the submission */
+  startedAt?: string | null | undefined;
+  /** Seconds spent on the question */
+  secondsSpent?: number | null | undefined;
+  /** Answer to the form question */
+  answer?: unknown;
+};
+
 export type UpdateCourseItemProgressInput = {
   itemId: string | number;
   completed?: boolean | null | undefined;
-  /** Progress between 0 and 1 */
+  /** Progress between 0 and 1. A 0 sent without `completed` only marks the item as started: it never lowers progress already recorded. Send `completed: false` with it to reset the item. */
   progress?: number | null | undefined;
 };
 
@@ -360,6 +1074,94 @@ export type SubmitAssignmentSubmissionInput = {
   submissionId: string | number;
 };
 
+export type SubmitQuizInput = {
+  quizId: string | number;
+  courseId?: string | number | null | undefined;
+  itemId?: string | number | null | undefined;
+  inVideoQuizId?: string | number | null | undefined;
+  startedAt: string;
+  submission: Record<string, unknown>;
+};
+
+export type CommunityAttachmentInput = {
+  /** The s3Key returned by createCommunityAttachmentUpload, after the file was uploaded. */
+  s3Key: string;
+  sizeBytes: number;
+  fileName: string;
+  contentType: string;
+};
+
+export type CreateCommunityAttachmentUploadInput = {
+  spaceId: string | number;
+  target: CommunityAttachmentTarget;
+  /** Required when target is CHAT_MESSAGE. */
+  roomId?: string | number | null | undefined;
+  clientFileInfo: CommunityAttachmentClientFileInfoInput;
+  /** The post the comment is on. Required when target is COMMENT, and refused for any other target. */
+  postId?: string | number | null | undefined;
+};
+
+export type CommunityAttachmentClientFileInfoInput = {
+  sizeBytes: number;
+  filename: string;
+  contentType: string;
+};
+
+export type CreateCommunityPostInput = {
+  spaceId: string | number;
+  /** Client-generated token that makes this create safe to retry. Sending the same value again returns the post that was already created instead of publishing a second one. */
+  clientMutationToken?: string | null | undefined;
+  /** Defaults to REGULAR. ANNOUNCEMENT posts can only be created by space moderators and organization staff. */
+  type?: CommunityPostType | null | undefined;
+  title?: string | null | undefined;
+  /** Structured rich-text document for the post body. */
+  content: unknown;
+  /** Files to attach, previously uploaded via createCommunityAttachmentUpload for this space: at most 10, and at most 1 of them a video. A video can be up to 100 MB, any other file up to 25 MB. */
+  attachments?: Array<CommunityAttachmentInput> | null | undefined;
+  /** Topics to tag the post with, at most 3, all from the space the post is in. */
+  topicIds?: Array<string | number> | null | undefined;
+};
+
+export type UpdateCommunityPostInput = {
+  id: string | number;
+  /** New structured rich-text document for the post body. Omit to keep the current body. */
+  content?: unknown;
+  title?: CommunityPostTitleInput | null | undefined;
+  /** The post's topics from now on, at most 3, all from the space the post is in. Replaces the current topics; an empty list removes them all. Omit to keep the current topics. */
+  topicIds?: Array<string | number> | null | undefined;
+};
+
+/** The input when updating a community post title. Input type is used to allow for partial updates. Value will not be updated if input is null. Set value to null to clear the title. */
+export type CommunityPostTitleInput = {
+  value?: string | null | undefined;
+};
+
+export type DeleteCommunityPostInput = {
+  id: string | number;
+};
+
+export type CreateCommunityCommentInput = {
+  postId: string | number;
+  /** Reply target. Must be a top-level comment of the same post (one-level threading). */
+  parentCommentId?: string | number | null | undefined;
+  /** Structured rich-text document for the comment body. */
+  content: unknown;
+  /** Any value the client wants echoed back on the result, so it can match the created comment to the one it optimistically rendered. It is never stored and never shown to anyone. */
+  clientMutationToken?: string | null | undefined;
+  /** Files to attach, previously uploaded via createCommunityAttachmentUpload for this space: at most 10, and at most 1 of them a video. A video can be up to 100 MB, any other file up to 25 MB. */
+  attachments?: Array<CommunityAttachmentInput> | null | undefined;
+};
+
+export type UpdateCommunityCommentInput = {
+  id: string | number;
+  /** New structured rich-text document for the comment body. */
+  content: unknown;
+};
+
+export type DeleteCommunityCommentInput = {
+  id: string | number;
+};
+
 export type CreateForumPostInput = {
   forumId: string | number;
   content: unknown;
@@ -371,19 +1173,33 @@ export type CreateForumPostCommentInput = {
   content: unknown;
 };
 
-export type SubmitQuizInput = {
-  quizId: string | number;
-  courseId?: string | number | null | undefined;
-  itemId?: string | number | null | undefined;
-  inVideoQuizId?: string | number | null | undefined;
-  startedAt: string;
-  submission: Record<string, unknown>;
+export type SubscribeMailingListInput = {
+  mailingListId: string | number;
+  customFields?: Array<OrganizationStudentCustomFieldInput> | null | undefined;
+  legalDocumentIds?: Array<string | number> | null | undefined;
+  email: string;
+};
+
+export type UpdateVideoWatchStateInput = {
+  videoId: string | number;
+  /** How much of the video has been watched, as a fraction between 0 and 1 — not a percentage. Omit to leave the recorded position untouched. */
+  progress?: number | null | undefined;
+  /** Report that the player reached the end. Independent of `progress`: a video can count as watched by crossing the completion threshold without this ever being sent. Once true it is never silently cleared — pass false explicitly to reopen it. */
+  completed?: boolean | null | undefined;
 };
 
 export type GetAttachmentUrlInput = {
   attachmentId: string | number;
   itemId?: string | number | null | undefined;
   assignmentSubmissionId?: string | number | null | undefined;
+  /** The community event this attachment is shown on. Supply it to download a file listed on that event: anyone who can view the event and its space may download it, including members who are not part of the organization. Leave it unset for attachments that do not belong to a community event. */
+  communityEventId?: string | number | null | undefined;
+  /** The coaching reservation this attachment is shown on. Supply it to download a file listed on that reservation: the student who booked it, anyone holding a booked seat on it, and the organization staff who run it may download it. Leave it unset for attachments that do not belong to a coaching reservation. */
+  coachingSessionReservationId?: string | number | null | undefined;
+  /** The live event this attachment is shown on. Supply it to download a file listed on that live event: anyone with access to the live content may download it. Leave it unset for attachments that do not belong to a live event. */
+  liveEventId?: string | number | null | undefined;
+  /** The form submission this attachment was uploaded to. Supply it to download a file on that submission: the person who submitted the form — including one who filled it in without an account, using the link they were given — and the organization staff who review it may download it. Leave it unset for attachments that do not belong to a form submission. */
+  formQuestionSubmissionId?: string | number | null | undefined;
 };
 
 export type UpdateForumPostReactionInput = {
@@ -398,6 +1214,86 @@ export type UpdateForumPostCommentReactionInput = {
   isPositive?: boolean | null | undefined;
 };
 
+export type SetCommunityPostReactionInput = {
+  postId: string | number;
+  /** Which reaction to set. Defaults to LIKE. You hold at most one reaction on a post, so setting a different kind replaces the one you had. */
+  kind?: CommunityReactionKind | null | undefined;
+  /** True to add the reaction, false to take it back. Repeating the state you are already in changes nothing. */
+  active: boolean;
+};
+
+export type SetCommunityCommentReactionInput = {
+  commentId: string | number;
+  /** Which reaction to set. Defaults to LIKE. You hold at most one reaction on a comment, so setting a different kind replaces the one you had. */
+  kind?: CommunityReactionKind | null | undefined;
+  /** True to add the reaction, false to take it back. Repeating the state you are already in changes nothing. */
+  active: boolean;
+};
+
+export type ReportCommunityContentInput = {
+  /** The reported post. Exactly one target must be set. */
+  postId?: string | number | null | undefined;
+  /** The reported comment. Exactly one target must be set. */
+  commentId?: string | number | null | undefined;
+  /** The reported chat message. Exactly one target must be set. */
+  chatMessageId?: string | number | null | undefined;
+  reason: CommunityReportReason;
+  /** Optional free-text context for the moderators. */
+  note?: string | null | undefined;
+  /** The reported direct message, from a conversation you take part in. Exactly one target must be set. */
+  directMessageId?: string | number | null | undefined;
+};
+
+/** What placed a recommended product in front of the buyer. */
+export type RecommendationSource =
+  /** A recommendation the school set up by hand. */
+  | 'MANUAL'
+  /** A suggestion made automatically from the school's catalog and sales. */
+  | 'AUTOMATIC'
+  /** A one-tick add-on offered at the payment step. */
+  | 'ORDER_BUMP';
+
+/** Why a product was recommended. */
+export type RecommendationStrategy =
+  /** The school recommends it by hand next to these products. */
+  | 'MANUAL'
+  /** Buyers of these products often bought it too. */
+  | 'CO_PURCHASE'
+  /** It shares a topic with these products, or belongs to the same bundle. */
+  | 'CONTENT'
+  /** One of the school's best sellers lately. */
+  | 'POPULAR'
+  /** Next in the school's catalog order. */
+  | 'CATALOG';
+
+/** Where a list of recommended products is shown. */
+export type RecommendationRailPlacement =
+  /** In the cart. */
+  | 'CART'
+  /** At the payment step. */
+  | 'CHECKOUT'
+  /** On a product page. */
+  | 'PRODUCT_PAGE'
+  /** On the page shown after a purchase. */
+  | 'THANK_YOU'
+  /** On the learner's own courses page. */
+  | 'DASHBOARD'
+  /** In the gift options at the payment step. */
+  | 'GIFT_PANEL';
+
+/** Whether a product is on sale to the public right now, independent of who is asking. */
+export type OrderablePublicSaleState =
+  /** The product is on sale and anyone can buy it. */
+  | 'ON_SALE'
+  /** The product is on sale, but every available seat has been taken. */
+  | 'SOLD_OUT'
+  /** The seller has paused sales of this product. It may go back on sale later. */
+  | 'SALES_PAUSED'
+  /** The product cannot be bought: it is not published, has no price, or is otherwise not offered for sale. */
+  | 'NOT_ON_SALE'
+  /** The product is on sale only to holders of a particular membership or tag. */
+  | 'MEMBERS_ONLY';
+
 export type SdkAddCartOrderableMutationVariables = Exact<{
   input: AddCartOrderableInput;
 }>;
@@ -410,14 +1306,14 @@ export type SdkAddCartOrderableMutation = { addCartOrderable: { cart: { id: stri
           | { __typename: 'DigitalProduct', id: string }
           | { __typename: 'LiveEvent', id: string }
           | { __typename: 'OrgSubscriptionTier', id: string }
-         }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+         }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkAddCouponCodeMutationVariables = Exact<{
   input: AddCouponCodeInput;
 }>;
 
 
-export type SdkAddCouponCodeMutation = { addCouponCode: { cart: { id: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } }, promotions: Array<{ id: string }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkAddCouponCodeMutation = { addCouponCode: { cart: { id: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } }, promotions: Array<{ id: string }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkAttachmentWatermarkJobQueryVariables = Exact<{
   jobId: string | number;
@@ -433,6 +1329,9 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'SystemEmail' }
     | { __typename: 'SystemEmailTrackingEvent' }
     | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
     | { __typename: 'Attachment' }
     | { __typename: 'Campaign' }
     | { __typename: 'MailingList' }
@@ -446,12 +1345,14 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'OrderTransaction' }
     | { __typename: 'Order' }
     | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
     | { __typename: 'Cart' }
     | { __typename: 'Bundle' }
     | { __typename: 'ParasutOrganizationBillingIntegration' }
     | { __typename: 'PiOrganizationBillingIntegration' }
     | { __typename: 'ReceiptOrganizationBillingIntegration' }
     | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
     | { __typename: 'CourseInstructor' }
     | { __typename: 'CourseAcademicTermStudent' }
     | { __typename: 'CoachingSession' }
@@ -470,16 +1371,15 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'OrgSubscriptionTierPricing' }
     | { __typename: 'OrgSubscriptionTierLifetimePricing' }
     | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'CoachingSessionStudent' }
     | { __typename: 'CoachingSessionStudentPlan' }
-    | { __typename: 'Notification' }
     | { __typename: 'CoachingSessionReservation' }
     | { __typename: 'CoachingSessionReservationAttendee' }
     | { __typename: 'CoachAvailabilityRule' }
     | { __typename: 'CoachAvailabilityOverride' }
     | { __typename: 'CoachingSessionInstructor' }
     | { __typename: 'GiftedOrgSubscription' }
-    | { __typename: 'OrganizationSystemEmailTemplate' }
     | { __typename: 'OrganizationRole' }
     | { __typename: 'OrganizationMemberRoleAssignment' }
     | { __typename: 'AutomationTrigger' }
@@ -495,6 +1395,8 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'MatchingQuiz' }
     | { __typename: 'ExamQuiz' }
     | { __typename: 'Exam' }
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
     | { __typename: 'Forum' }
     | { __typename: 'Form' }
     | { __typename: 'OrgSubscriptionProduct' }
@@ -504,6 +1406,7 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'LegalDocument' }
     | { __typename: 'LegalDocumentAcceptance' }
     | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
     | { __typename: 'InstagramAutoDmRule' }
     | { __typename: 'TagGroup' }
     | { __typename: 'TagGroupTag' }
@@ -536,23 +1439,36 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'PaymentFormQuestion' }
     | { __typename: 'SubscriptionPromotion' }
     | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
     | { __typename: 'OrganizationCommunitySettings' }
     | { __typename: 'CommunitySpaceGroup' }
     | { __typename: 'SubscriptionPromotionUsage' }
     | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
     | { __typename: 'OrganizationWhatsappNotificationSettings' }
     | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
     | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
     | { __typename: 'CommunitySpace' }
     | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
     | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
     | { __typename: 'CommunityEventWaitlistEntry' }
     | { __typename: 'CommunityEventRsvp' }
-    | { __typename: 'CommunityEventSeries' }
-    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'OrderBillingAddress' }
-    | { __typename: 'Gift' }
-    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrderRefund' }
     | { __typename: 'OrganizationPaymentMethod' }
     | { __typename: 'FormPaymentSession' }
     | { __typename: 'OrganizationAttachmentWatermarkSettings' }
@@ -563,16 +1479,15 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'OrderableGroupPrice' }
     | { __typename: 'CommunityPostAttachment' }
     | { __typename: 'CommunityChatMessageAttachment' }
-    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
     | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
     | { __typename: 'OrganizationForumSettings' }
     | { __typename: 'ForumSettings' }
     | { __typename: 'ForumPost' }
     | { __typename: 'ForumPostComment' }
     | { __typename: 'MailingListSubscription' }
     | { __typename: 'VideoChapters' }
-    | { __typename: 'FormQuestionSubmission' }
-    | { __typename: 'FormSession' }
     | { __typename: 'ExamSession' }
     | { __typename: 'FormResultPage' }
     | { __typename: 'FormCalculationResult' }
@@ -607,8 +1522,10 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'OrderLineItemsExportJob' }
     | { __typename: 'LegalDocumentAcceptanceExportJob' }
     | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
     | { __typename: 'ExclusionListEntriesExportJob' }
     | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
     | { __typename: 'GeneratedPageRule' }
     | { __typename: 'GeneratedPageOverride' }
     | { __typename: 'OrganizationRedirect' }
@@ -618,24 +1535,35 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'SocialPostSlide' }
     | { __typename: 'SocialPost' }
     | { __typename: 'OrganizationSocialPostTheme' }
-    | { __typename: 'GiftLineItem' }
     | { __typename: 'FormCalculation' }
-    | { __typename: 'CommunityPost' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
     | { __typename: 'NumericScaleGradingQuestion' }
     | { __typename: 'TextFeedbackGradingQuestion' }
     | { __typename: 'RubricGradingQuestion' }
     | { __typename: 'PassFailGradingQuestion' }
     | { __typename: 'DataProvenanceRecord' }
     | { __typename: 'WebPage' }
-    | { __typename: 'GeneratedPageBlockOverride' }
-    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebPageComponentTemplate' }
     | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
     | { __typename: 'WebsiteTemplate' }
     | { __typename: 'WebsiteTemplatePage' }
     | { __typename: 'OrganizationVideoWatermarkSettings' }
-    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrganizationMobileApp' }
     | { __typename: 'CustomFontFace' }
     | { __typename: 'CustomFont' }
     | { __typename: 'OrganizationLabelSettings' }
@@ -663,29 +1591,47 @@ export type SdkAttachmentWatermarkJobQuery = { node:
     | { __typename: 'EmailActivity' }
     | { __typename: 'ForumPostReaction' }
     | { __typename: 'ForumPostCommentReaction' }
-    | { __typename: 'CommunityComment' }
-    | { __typename: 'CommunityBadge' }
-    | { __typename: 'CommunityBadgeHolder' }
     | { __typename: 'CommunityContentReport' }
-    | { __typename: 'CommunityBan' }
+    | { __typename: 'CommunityModerationLogEntry' }
     | { __typename: 'OrganizationMemberCustomFieldDefinition' }
     | { __typename: 'GlobalEmailSuppression' }
     | { __typename: 'FormNavigationSettings' }
-    | { __typename: 'Referral' }
-    | { __typename: 'ReferralCode' }
-    | { __typename: 'ReferralPartner' }
-    | { __typename: 'ReferralReward' }
     | { __typename: 'XapiCredential' }
     | { __typename: 'XapiStatement' }
     | { __typename: 'Cmi5Au' }
     | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
     | { __typename: 'PayoutTransfer' }
-    | { __typename: 'ScormSession' }
-    | { __typename: 'SocialPostPublication' }
-    | { __typename: 'OrgRouteManifestEntry' }
-    | { __typename: 'SiteBundle' }
     | { __typename: 'OrgApiKey' }
-    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
    | null };
 
 export type SdkCartQueryVariables = Exact<{
@@ -710,7 +1656,7 @@ export type SdkCatalogQueryVariables = Exact<{
 }>;
 
 
-export type SdkCatalogQuery = { organization: { id: string, name: string, slug: string, courses: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null } }> }, bundles: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } }> }, digitalProducts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } }> }, liveEvents: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } }> } } | null };
+export type SdkCatalogQuery = { organization: { id: string, name: string, slug: string, courses: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null } }> }, bundles: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerBlockedByPurchaseGate: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } }> }, digitalProducts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerBlockedByPurchaseGate: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } }> }, liveEvents: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerBlockedByPurchaseGate: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } }> } } | null };
 
 export type SdkCoachingSessionQueryVariables = Exact<{
   organizationSlug: string;
@@ -720,12 +1666,429 @@ export type SdkCoachingSessionQueryVariables = Exact<{
 
 export type SdkCoachingSessionQuery = { coachingSession: { id: string, title: string, slug: string, plans: Array<{ id: string, name: string | null, slug: string, sessionCount: number, sessionDurationMinutes: number | null, viewerCanOrder: boolean, salesPaused: boolean, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }> } | null };
 
+export type SdkCommunityCommentRepliesQueryVariables = Exact<{
+  commentId: string | number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SdkCommunityCommentRepliesQuery = { communityComment: { id: string, replyCount: number, viewerCanReply: boolean, replies: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, parentCommentId: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, editedAt: string | null, viewerIsAuthor: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null } }> } } | null };
+
+export type SdkCommunityReplyFieldsFragment = { id: string, parentCommentId: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, editedAt: string | null, viewerIsAuthor: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null };
+
+export type SdkCommunityEventsQueryVariables = Exact<{
+  organizationSlug: string;
+  after?: string | null | undefined;
+  spaceId?: string | number | null | undefined;
+  timeframe?: CommunityEventTimeframe | null | undefined;
+  relation?: CommunityEventViewerRelation | null | undefined;
+}>;
+
+
+export type SdkCommunityEventsQuery = { organization: { id: string, communityEventsConnection: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ node: { id: string, title: string, subtitle: string | null, description: unknown, image: string | null, startAt: string, endAt: string | null, timezone: string, status: CommunityEventStatus, locationType: CommunityEventLocationType, locationText: string | null, meetingUrl: string | null, rsvpLimit: number | null, isFull: boolean, goingCount: number | null, remainingCapacity: number | null, waitlistEnabled: boolean, rsvpClosesAt: string | null, viewerCanRsvp: boolean, descriptionRich: { html: string, text: string } | null, viewerRsvp: { id: string, status: CommunityRsvpStatus } | null, space: { id: string, name: string, slug: string } | null, hosts: Array<{ id: string, displayName: string, image: string | null, isStaff: boolean }>, recordingVideo: { id: string, url: string | null, posterUrl: string | null, duration: number | null, status: VideoStatus } | null } }> } } | null };
+
+export type SdkCommunityFeedQueryVariables = Exact<{
+  organizationId: string | number;
+  after?: string | null | undefined;
+  spaceIds?: Array<string | number> | string | number | null | undefined;
+  sort?: CommunityPostSortOrder | null | undefined;
+  authorRole?: CommunitySpaceMemberRole | null | undefined;
+}>;
+
+
+export type SdkCommunityFeedQuery = { communityFeed: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ node: { id: string, title: string | null, content: unknown, type: CommunityPostType, status: CommunityModerationStatus, createdAt: string, lastActivityAt: string, editedAt: string | null, isPinned: boolean, isLocked: boolean, pinnedAt: string | null, commentCount: number, viewerIsAuthor: boolean, viewerCanComment: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, contentRich: { html: string, text: string } | null, space: { id: string, name: string, slug: string } | null, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null, attachments: Array<{ id: string, fileName: string, contentType: string, sizeBytes: number, scanStatus: CommunityAttachmentScanStatus, url: string | null }> } }>, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> | null } | null };
+
+export type SdkCommunityPostCardFragment = { id: string, title: string | null, content: unknown, type: CommunityPostType, status: CommunityModerationStatus, createdAt: string, lastActivityAt: string, editedAt: string | null, isPinned: boolean, isLocked: boolean, pinnedAt: string | null, commentCount: number, viewerIsAuthor: boolean, viewerCanComment: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, contentRich: { html: string, text: string } | null, space: { id: string, name: string, slug: string } | null, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null, attachments: Array<{ id: string, fileName: string, contentType: string, sizeBytes: number, scanStatus: CommunityAttachmentScanStatus, url: string | null }> };
+
+export type SdkCommunityMemberDirectoryQueryVariables = Exact<{
+  spaceId: string | number;
+  first: number;
+  after?: string | null | undefined;
+  query?: string | null | undefined;
+}>;
+
+
+export type SdkCommunityMemberDirectoryQuery = { communitySpace: { id: string, memberDirectoryWithheldReason: CommunityMemberDirectoryWithheldReason | null, memberDirectory: { totalCount: number | null, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } }> } | null } | null };
+
+export type SdkCommunityPostQueryVariables = Exact<{
+  postId: string | number;
+}>;
+
+
+export type SdkCommunityPostQuery = { communityPost: { id: string, title: string | null, content: unknown, type: CommunityPostType, status: CommunityModerationStatus, createdAt: string, lastActivityAt: string, editedAt: string | null, isPinned: boolean, isLocked: boolean, commentCount: number, viewerIsAuthor: boolean, viewerCanComment: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, space: { id: string, name: string, slug: string, viewerCanPost: boolean } | null, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null, attachments: Array<{ id: string, fileName: string, contentType: string, sizeBytes: number, scanStatus: CommunityAttachmentScanStatus, url: string | null }> } | null };
+
+export type SdkCommunityPostCommentsQueryVariables = Exact<{
+  postId: string | number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SdkCommunityPostCommentsQuery = { communityPost: { id: string, commentCount: number, viewerCanComment: boolean, comments: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, parentCommentId: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, editedAt: string | null, replyCount: number, viewerIsAuthor: boolean, viewerCanReply: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null } }> } } | null };
+
+export type SdkCommunityCommentFieldsFragment = { id: string, parentCommentId: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, editedAt: string | null, replyCount: number, viewerIsAuthor: boolean, viewerCanReply: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null };
+
+export type SdkCommunityReactorsQueryVariables = Exact<{
+  nodeId: string | number;
+  first: number;
+  after?: string | null | undefined;
+  kind?: CommunityReactionKind | null | undefined;
+}>;
+
+
+export type SdkCommunityReactorsQuery = { node:
+    | { __typename: 'Organization', id: string }
+    | { __typename: 'OrganizationMember', id: string }
+    | { __typename: 'User', id: string }
+    | { __typename: 'OrganizationEmailSettings', id: string }
+    | { __typename: 'OrganizationStudent', id: string }
+    | { __typename: 'SystemEmail', id: string }
+    | { __typename: 'SystemEmailTrackingEvent', id: string }
+    | { __typename: 'EmailUsagePeriod', id: string }
+    | { __typename: 'OrganizationSystemEmailTemplate', id: string }
+    | { __typename: 'StudentDevice', id: string }
+    | { __typename: 'StudentDeviceSession', id: string }
+    | { __typename: 'Attachment', id: string }
+    | { __typename: 'Campaign', id: string }
+    | { __typename: 'MailingList', id: string }
+    | { __typename: 'AcademicTerm', id: string }
+    | { __typename: 'Course', id: string }
+    | { __typename: 'CourseAcademicTerm', id: string }
+    | { __typename: 'CampaignEmail', id: string }
+    | { __typename: 'AutomationExecution', id: string }
+    | { __typename: 'OrderLineItem', id: string }
+    | { __typename: 'Promotion', id: string }
+    | { __typename: 'OrderTransaction', id: string }
+    | { __typename: 'Order', id: string }
+    | { __typename: 'StripePaymentMethod', id: string }
+    | { __typename: 'Notification', id: string }
+    | { __typename: 'Cart', id: string }
+    | { __typename: 'Bundle', id: string }
+    | { __typename: 'ParasutOrganizationBillingIntegration', id: string }
+    | { __typename: 'PiOrganizationBillingIntegration', id: string }
+    | { __typename: 'ReceiptOrganizationBillingIntegration', id: string }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration', id: string }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration', id: string }
+    | { __typename: 'CourseInstructor', id: string }
+    | { __typename: 'CourseAcademicTermStudent', id: string }
+    | { __typename: 'CoachingSession', id: string }
+    | { __typename: 'OrganizationMemberInvitation', id: string }
+    | { __typename: 'InstructorInvitation', id: string }
+    | { __typename: 'StudentInvitation', id: string }
+    | { __typename: 'CoachingSessionStudentInvitation', id: string }
+    | { __typename: 'WaitlistInvitation', id: string }
+    | { __typename: 'CourseItemProgress', id: string }
+    | { __typename: 'CoachingSessionPlan', id: string }
+    | { __typename: 'DigitalProduct', id: string }
+    | { __typename: 'LiveEvent', id: string }
+    | { __typename: 'OrganizationCustomFieldDefinition', id: string }
+    | { __typename: 'Tag', id: string }
+    | { __typename: 'OrgSubscriptionTier', id: string }
+    | { __typename: 'OrgSubscriptionTierPricing', id: string }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing', id: string }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance', id: string }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition', id: string }
+    | { __typename: 'CoachingSessionStudent', id: string }
+    | { __typename: 'CoachingSessionStudentPlan', id: string }
+    | { __typename: 'CoachingSessionReservation', id: string }
+    | { __typename: 'CoachingSessionReservationAttendee', id: string }
+    | { __typename: 'CoachAvailabilityRule', id: string }
+    | { __typename: 'CoachAvailabilityOverride', id: string }
+    | { __typename: 'CoachingSessionInstructor', id: string }
+    | { __typename: 'GiftedOrgSubscription', id: string }
+    | { __typename: 'OrganizationRole', id: string }
+    | { __typename: 'OrganizationMemberRoleAssignment', id: string }
+    | { __typename: 'AutomationTrigger', id: string }
+    | { __typename: 'AutomationAction', id: string }
+    | { __typename: 'AutomationCondition', id: string }
+    | { __typename: 'Automation', id: string }
+    | { __typename: 'MultipleChoiceQuiz', id: string }
+    | { __typename: 'FreeResponseQuiz', id: string }
+    | { __typename: 'PhraseSelectionQuiz', id: string }
+    | { __typename: 'CategorizationQuiz', id: string }
+    | { __typename: 'FillInBlankQuiz', id: string }
+    | { __typename: 'OrderingQuiz', id: string }
+    | { __typename: 'MatchingQuiz', id: string }
+    | { __typename: 'ExamQuiz', id: string }
+    | { __typename: 'Exam', id: string }
+    | { __typename: 'ExamStage', id: string }
+    | { __typename: 'ExamStageVariant', id: string }
+    | { __typename: 'Forum', id: string }
+    | { __typename: 'Form', id: string }
+    | { __typename: 'OrgSubscriptionProduct', id: string }
+    | { __typename: 'CoachingSessionPlanPricing', id: string }
+    | { __typename: 'EventCampaign', id: string }
+    | { __typename: 'StudentOrgSubscription', id: string }
+    | { __typename: 'LegalDocument', id: string }
+    | { __typename: 'LegalDocumentAcceptance', id: string }
+    | { __typename: 'PaytrStoredCard', id: string }
+    | { __typename: 'CommunityBan', id: string }
+    | { __typename: 'InstagramAutoDmRule', id: string }
+    | { __typename: 'TagGroup', id: string }
+    | { __typename: 'TagGroupTag', id: string }
+    | { __typename: 'DocumentCourseItem', id: string }
+    | { __typename: 'InVideoQuiz', id: string }
+    | { __typename: 'Video', id: string }
+    | { __typename: 'VideoCourseItem', id: string }
+    | { __typename: 'QuizCourseItem', id: string }
+    | { __typename: 'AssignmentCourseItem', id: string }
+    | { __typename: 'ArticleCourseItem', id: string }
+    | { __typename: 'QuestionCourseItem', id: string }
+    | { __typename: 'EmbedCourseItem', id: string }
+    | { __typename: 'ExamCourseItem', id: string }
+    | { __typename: 'LiveCourseItem', id: string }
+    | { __typename: 'ForumCourseItem', id: string }
+    | { __typename: 'ScormPackage', id: string }
+    | { __typename: 'ScormCourseItem', id: string }
+    | { __typename: 'Cmi5Package', id: string }
+    | { __typename: 'Cmi5CourseItem', id: string }
+    | { __typename: 'Audio', id: string }
+    | { __typename: 'AudioCourseItem', id: string }
+    | { __typename: 'FormCourseItem', id: string }
+    | { __typename: 'CourseSection', id: string }
+    | { __typename: 'CourseAcademicTermPricing', id: string }
+    | { __typename: 'AssignmentSubmission', id: string }
+    | { __typename: 'StudentQuizSubmission', id: string }
+    | { __typename: 'CertificateTemplate', id: string }
+    | { __typename: 'Image', id: string }
+    | { __typename: 'StudentOrgSubscriptionPayment', id: string }
+    | { __typename: 'PaymentFormQuestion', id: string }
+    | { __typename: 'SubscriptionPromotion', id: string }
+    | { __typename: 'LiveCourseItemCalendarEntry', id: string }
+    | { __typename: 'FormQuestionSubmission', id: string }
+    | { __typename: 'FormSession', id: string }
+    | { __typename: 'OrganizationCommunitySettings', id: string }
+    | { __typename: 'CommunitySpaceGroup', id: string }
+    | { __typename: 'SubscriptionPromotionUsage', id: string }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings', id: string }
+    | { __typename: 'OrganizationWhatsappNotificationSettings', id: string }
+    | { __typename: 'StudentOrgSubscriptionInvoice', id: string }
+    | { __typename: 'Gift', id: string }
+    | { __typename: 'GiftLineItem', id: string }
+    | { __typename: 'PiEducationSubscription', id: string }
+    | { __typename: 'ReferralCode', id: string }
+    | { __typename: 'Referral', id: string }
+    | { __typename: 'ReferralPartner', id: string }
+    | { __typename: 'ReferralReward', id: string }
+    | { __typename: 'CommunitySpace', id: string }
+    | { __typename: 'CommunitySpaceMember', id: string }
+    | { __typename: 'CommunityPointsEntry', id: string }
+    | { __typename: 'CommunityBadge', id: string }
+    | { __typename: 'CommunityBadgeHolder', id: string }
+    | { __typename: 'CommunityProfile', id: string }
+    | { __typename: 'CommunityPost', id: string, reactors: { pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null }
+    | { __typename: 'CommunityComment', id: string, reactors: { pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null }
+    | { __typename: 'CommunityMember', id: string }
+    | { __typename: 'CommunityEvent', id: string }
+    | { __typename: 'CommunityEventSeries', id: string }
+    | { __typename: 'CommunityEventWaitlistEntry', id: string }
+    | { __typename: 'CommunityEventRsvp', id: string }
+    | { __typename: 'OrderBillingAddress', id: string }
+    | { __typename: 'OrderRefund', id: string }
+    | { __typename: 'OrganizationPaymentMethod', id: string }
+    | { __typename: 'FormPaymentSession', id: string }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings', id: string }
+    | { __typename: 'AttachmentWatermarkJob', id: string }
+    | { __typename: 'PiEducationSubscriptionPayment', id: string }
+    | { __typename: 'PiEducationPaymentPlan', id: string }
+    | { __typename: 'PriceGroup', id: string }
+    | { __typename: 'OrderableGroupPrice', id: string }
+    | { __typename: 'CommunityPostAttachment', id: string }
+    | { __typename: 'CommunityChatMessageAttachment', id: string }
+    | { __typename: 'CommunityAttachmentReviewItem', id: string }
+    | { __typename: 'CommunityChatMessage', id: string, reactors: { pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null }
+    | { __typename: 'CommunityChatRoom', id: string }
+    | { __typename: 'OrganizationForumSettings', id: string }
+    | { __typename: 'ForumSettings', id: string }
+    | { __typename: 'ForumPost', id: string }
+    | { __typename: 'ForumPostComment', id: string }
+    | { __typename: 'MailingListSubscription', id: string }
+    | { __typename: 'VideoChapters', id: string }
+    | { __typename: 'ExamSession', id: string }
+    | { __typename: 'FormResultPage', id: string }
+    | { __typename: 'FormCalculationResult', id: string }
+    | { __typename: 'TextFormQuestion', id: string }
+    | { __typename: 'ContactFormQuestion', id: string }
+    | { __typename: 'TextareaFormQuestion', id: string }
+    | { __typename: 'RadioFormQuestion', id: string }
+    | { __typename: 'CheckboxFormQuestion', id: string }
+    | { __typename: 'SelectFormQuestion', id: string }
+    | { __typename: 'MatrixFormQuestion', id: string }
+    | { __typename: 'DateFormQuestion', id: string }
+    | { __typename: 'MultiselectFormQuestion', id: string }
+    | { __typename: 'LinearScaleFormQuestion', id: string }
+    | { __typename: 'FileFormQuestion', id: string }
+    | { __typename: 'ContentFormQuestion', id: string }
+    | { __typename: 'TagGroupSelectFormQuestion', id: string }
+    | { __typename: 'TagSelectFormQuestion', id: string }
+    | { __typename: 'CustomFieldFormQuestion', id: string }
+    | { __typename: 'FormSection', id: string }
+    | { __typename: 'FormSessionGrade', id: string }
+    | { __typename: 'ExamQuestionImportJob', id: string }
+    | { __typename: 'CampaignOrderableTarget', id: string }
+    | { __typename: 'ExclusionList', id: string }
+    | { __typename: 'CampaignExcludedOrderableTarget', id: string }
+    | { __typename: 'CampaignExcludedMailingList', id: string }
+    | { __typename: 'CampaignOrgSubscriptionPlan', id: string }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan', id: string }
+    | { __typename: 'CampaignTemplate', id: string }
+    | { __typename: 'EventCampaignEmail', id: string }
+    | { __typename: 'ExclusionListEntry', id: string }
+    | { __typename: 'FormResultsExportJob', id: string }
+    | { __typename: 'OrderLineItemsExportJob', id: string }
+    | { __typename: 'LegalDocumentAcceptanceExportJob', id: string }
+    | { __typename: 'OrganizationStudentsExportJob', id: string }
+    | { __typename: 'CourseContentImportJob', id: string }
+    | { __typename: 'ExclusionListEntriesExportJob', id: string }
+    | { __typename: 'MailingListSubscriptionsExportJob', id: string }
+    | { __typename: 'IysConsentExportJob', id: string }
+    | { __typename: 'GeneratedPageRule', id: string }
+    | { __typename: 'GeneratedPageOverride', id: string }
+    | { __typename: 'OrganizationRedirect', id: string }
+    | { __typename: 'ContentCategory', id: string }
+    | { __typename: 'ContentPage', id: string }
+    | { __typename: 'EmailComponentTemplate', id: string }
+    | { __typename: 'SocialPostSlide', id: string }
+    | { __typename: 'SocialPost', id: string }
+    | { __typename: 'OrganizationSocialPostTheme', id: string }
+    | { __typename: 'FormCalculation', id: string }
+    | { __typename: 'FormScoringMatrixEntry', id: string }
+    | { __typename: 'FormScoringDimension', id: string }
+    | { __typename: 'NumericScaleGradingQuestion', id: string }
+    | { __typename: 'TextFeedbackGradingQuestion', id: string }
+    | { __typename: 'RubricGradingQuestion', id: string }
+    | { __typename: 'PassFailGradingQuestion', id: string }
+    | { __typename: 'DataProvenanceRecord', id: string }
+    | { __typename: 'WebPage', id: string }
+    | { __typename: 'WebsiteSettings', id: string }
+    | { __typename: 'OrgRouteManifestEntry', id: string }
+    | { __typename: 'GeneratedPageBlockOverride', id: string }
+    | { __typename: 'GeneratedPageEntityPin', id: string }
+    | { __typename: 'SocialPostPublication', id: string }
+    | { __typename: 'DemoOrganization', id: string }
+    | { __typename: 'SiteBundle', id: string }
+    | { __typename: 'SiteBundleActivation', id: string }
+    | { __typename: 'OrganizationUISettings', id: string }
+    | { __typename: 'OrderableRecommendation', id: string }
+    | { __typename: 'WebPageComponentTemplate', id: string }
+    | { __typename: 'WebPageTemplate', id: string }
+    | { __typename: 'CustomerPlatformInvoice', id: string }
+    | { __typename: 'PlatformHistoricalInvoice', id: string }
+    | { __typename: 'PlatformFeeAdjustmentDocument', id: string }
+    | { __typename: 'PlatformInvoice', id: string }
+    | { __typename: 'WebsiteTemplate', id: string }
+    | { __typename: 'WebsiteTemplatePage', id: string }
+    | { __typename: 'OrganizationVideoWatermarkSettings', id: string }
+    | { __typename: 'OrganizationMobileApp', id: string }
+    | { __typename: 'CustomFontFace', id: string }
+    | { __typename: 'CustomFont', id: string }
+    | { __typename: 'OrganizationLabelSettings', id: string }
+    | { __typename: 'CourseAcademicTermUISettings', id: string }
+    | { __typename: 'StudentBillingAddress', id: string }
+    | { __typename: 'OrganizationBillingAddress', id: string }
+    | { __typename: 'PushDevice', id: string }
+    | { __typename: 'OrderInvoice', id: string }
+    | { __typename: 'PiEducationSubscriptionInvoice', id: string }
+    | { __typename: 'SupportConversation', id: string }
+    | { __typename: 'SupportMessage', id: string }
+    | { __typename: 'SupportInbox', id: string }
+    | { __typename: 'SupportMessageAttachment', id: string }
+    | { __typename: 'SupportParticipant', id: string }
+    | { __typename: 'SupportCannedReply', id: string }
+    | { __typename: 'SupportBusinessHours', id: string }
+    | { __typename: 'CrmProfile', id: string }
+    | { __typename: 'CrmNote', id: string }
+    | { __typename: 'CrmCall', id: string }
+    | { __typename: 'CrmTask', id: string }
+    | { __typename: 'CrmOutreach', id: string }
+    | { __typename: 'CrmSequenceEnrollment', id: string }
+    | { __typename: 'CrmSavedSegment', id: string }
+    | { __typename: 'PageView', id: string }
+    | { __typename: 'EmailActivity', id: string }
+    | { __typename: 'ForumPostReaction', id: string }
+    | { __typename: 'ForumPostCommentReaction', id: string }
+    | { __typename: 'CommunityContentReport', id: string }
+    | { __typename: 'CommunityModerationLogEntry', id: string }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition', id: string }
+    | { __typename: 'GlobalEmailSuppression', id: string }
+    | { __typename: 'FormNavigationSettings', id: string }
+    | { __typename: 'XapiCredential', id: string }
+    | { __typename: 'XapiStatement', id: string }
+    | { __typename: 'Cmi5Au', id: string }
+    | { __typename: 'StudentCertificate', id: string }
+    | { __typename: 'PayoutDeduction', id: string }
+    | { __typename: 'SubscriptionPaymentRefund', id: string }
+    | { __typename: 'PayoutTransfer', id: string }
+    | { __typename: 'OrgApiKey', id: string }
+    | { __typename: 'ScormSession', id: string }
+    | { __typename: 'StudentReferralProgram', id: string }
+    | { __typename: 'StudentReferral', id: string }
+    | { __typename: 'ForumContentReport', id: string }
+    | { __typename: 'CommunityFeedView', id: string }
+    | { __typename: 'CommunityRailLink', id: string }
+    | { __typename: 'CommunityRailSection', id: string }
+    | { __typename: 'CommunitySpaceTab', id: string }
+    | { __typename: 'CommunityPostTopic', id: string }
+    | { __typename: 'CommunityPeerGroupProgram', id: string }
+    | { __typename: 'CommunityPeerGroup', id: string }
+    | { __typename: 'CommunityJourneyTemplate', id: string }
+    | { __typename: 'CommunityJourneyStage', id: string }
+    | { __typename: 'CommunityJourneyTask', id: string }
+    | { __typename: 'CommunityJourneyMetric', id: string }
+    | { __typename: 'CommunityJourneyMetricEntry', id: string }
+    | { __typename: 'CommunityJourneyNote', id: string }
+    | { __typename: 'CommunityJourneyEnrollment', id: string }
+    | { __typename: 'CommunityJourney', id: string }
+    | { __typename: 'CommunityAiAssistant', id: string }
+    | { __typename: 'CommunityAiConversation', id: string }
+    | { __typename: 'CommunityAiMessage', id: string }
+    | { __typename: 'CommunityExternalTool', id: string }
+    | { __typename: 'OrderableRecommendationExclusion', id: string }
+    | { __typename: 'PipelineShadowJob', id: string }
+    | { __typename: 'CampaignCrmSegment', id: string }
+    | { __typename: 'CampaignExcludedCrmSegment', id: string }
+    | { __typename: 'CommunityCommentAttachment', id: string }
+   | null };
+
+export type SdkCommunityReactorPageFragment = { pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> };
+
+export type SdkCommunitySpaceGroupsQueryVariables = Exact<{
+  organizationId: string | number;
+}>;
+
+
+export type SdkCommunitySpaceGroupsQuery = { communitySpaceGroups: Array<{ id: string, name: string, slug: string, objectIndex: number, spaces: Array<{ id: string, name: string, slug: string, viewerCanView: boolean, viewerUnreadPostCount: number }> }> };
+
+export type SdkCommunitySpacePostsQueryVariables = Exact<{
+  spaceId: string | number;
+  after?: string | null | undefined;
+  sort?: CommunityPostSortOrder | null | undefined;
+  authorRole?: CommunitySpaceMemberRole | null | undefined;
+}>;
+
+
+export type SdkCommunitySpacePostsQuery = { communitySpace: { id: string, name: string, slug: string, description: string | null, viewerCanView: boolean, viewerCanPost: boolean, viewerCanJoin: boolean, viewerRequiresPayment: boolean, viewerUnreadPostCount: number, viewerJoinsOnFirstPost: boolean, effectiveSettings: { postCreationEnabled: boolean, postEditingEnabled: boolean, postDeletionEnabled: boolean, commentCreationEnabled: boolean, commentEditingEnabled: boolean, commentDeletionEnabled: boolean, autoApprovePosts: boolean, autoApproveComments: boolean }, pinnedCommunityPosts: Array<{ id: string, title: string | null, content: unknown, type: CommunityPostType, status: CommunityModerationStatus, createdAt: string, lastActivityAt: string, editedAt: string | null, isPinned: boolean, isLocked: boolean, pinnedAt: string | null, commentCount: number, viewerIsAuthor: boolean, viewerCanComment: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, contentRich: { html: string, text: string } | null, space: { id: string, name: string, slug: string } | null, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null, attachments: Array<{ id: string, fileName: string, contentType: string, sizeBytes: number, scanStatus: CommunityAttachmentScanStatus, url: string | null }> }>, posts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ node: { id: string, title: string | null, content: unknown, type: CommunityPostType, status: CommunityModerationStatus, createdAt: string, lastActivityAt: string, editedAt: string | null, isPinned: boolean, isLocked: boolean, pinnedAt: string | null, commentCount: number, viewerIsAuthor: boolean, viewerCanComment: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, contentRich: { html: string, text: string } | null, space: { id: string, name: string, slug: string } | null, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null, attachments: Array<{ id: string, fileName: string, contentType: string, sizeBytes: number, scanStatus: CommunityAttachmentScanStatus, url: string | null }> } }> } } | null };
+
+export type SdkCommunitySpacesQueryVariables = Exact<{
+  organizationId: string | number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SdkCommunitySpacesQuery = { communitySpaces: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ node: { id: string, name: string, slug: string, description: string | null, icon: string | null, image: string | null, objectIndex: number, postCount: number | null, lastActivityAt: string | null, archivedAt: string | null, viewerUnreadPostCount: number, viewerLastReadAt: string | null, viewerCanView: boolean, viewerCanPost: boolean, viewerCanJoin: boolean, viewerRequiresPayment: boolean, viewerMembership: { id: string, role: CommunitySpaceMemberRole, status: CommunitySpaceMemberStatus } | null, group: { id: string, name: string, slug: string, objectIndex: number } | null, unlockingTiers: Array<{ id: string, name: string, slug: string }> | null } }> } };
+
 export type SdkCompleteFreeOrderMutationVariables = Exact<{
   input: CompleteFreeOrderInput;
 }>;
 
 
-export type SdkCompleteFreeOrderMutation = { completeFreeOrder: { order: { id: string, slug: string, status: OrderStatus } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkCompleteFreeOrderMutation = { completeFreeOrder: { order: { id: string, slug: string, status: OrderStatus } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkContentBlogQueryVariables = Exact<{
+  organizationSlug: string;
+}>;
+
+
+export type SdkContentBlogQuery = { organization: { contentTree: Array<{ slug: string, label: string, renderMode: ContentCategoryRenderMode, pages: Array<{ slug: string, title: string, description: string | null, bannerImage: string | null, publishedAt: string | null, body: string }> | null, children: Array<{ slug: string, label: string, renderMode: ContentCategoryRenderMode, pages: Array<{ slug: string, title: string, description: string | null, bannerImage: string | null, publishedAt: string | null, body: string }> | null, children: Array<{ slug: string, label: string, renderMode: ContentCategoryRenderMode, pages: Array<{ slug: string, title: string, description: string | null, bannerImage: string | null, publishedAt: string | null, body: string }> | null, children: Array<{ slug: string, label: string, renderMode: ContentCategoryRenderMode, pages: Array<{ slug: string, title: string, description: string | null, bannerImage: string | null, publishedAt: string | null, body: string }> | null }> | null }> | null }> | null }> } | null };
 
 export type SdkCourseQueryVariables = Exact<{
   organizationSlug: string;
@@ -733,7 +2096,15 @@ export type SdkCourseQueryVariables = Exact<{
 }>;
 
 
-export type SdkCourseQuery = { course: { id: string, title: string, slug: string, shortDescription: string | null, academicTerms: Array<{ id: string, title: string, slug: string, viewerCanOrder: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }> } | null };
+export type SdkCourseQuery = { course: { id: string, title: string, slug: string, shortDescription: string | null, academicTerms: Array<{ id: string, title: string, slug: string, viewerCanOrder: boolean, viewerBlockedByPurchaseGate: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }> } | null };
+
+export type SdkCourseCustomFieldsQueryVariables = Exact<{
+  organizationSlug: string;
+  slug: string;
+}>;
+
+
+export type SdkCourseCustomFieldsQuery = { course: { id: string, customFieldValues: Array<{ value: unknown, fieldDefinition: { id: string, title: string, type: CustomFieldDefinitionType, visibility: CustomFieldVisibility, validationSchema: unknown } }> } | null };
 
 export type SdkCourseItemDetailQueryVariables = Exact<{
   itemId: string | number;
@@ -749,6 +2120,9 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'SystemEmail' }
     | { __typename: 'SystemEmailTrackingEvent' }
     | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
     | { __typename: 'Attachment' }
     | { __typename: 'Campaign' }
     | { __typename: 'MailingList' }
@@ -762,12 +2136,14 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'OrderTransaction' }
     | { __typename: 'Order' }
     | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
     | { __typename: 'Cart' }
     | { __typename: 'Bundle' }
     | { __typename: 'ParasutOrganizationBillingIntegration' }
     | { __typename: 'PiOrganizationBillingIntegration' }
     | { __typename: 'ReceiptOrganizationBillingIntegration' }
     | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
     | { __typename: 'CourseInstructor' }
     | { __typename: 'CourseAcademicTermStudent' }
     | { __typename: 'CoachingSession' }
@@ -786,16 +2162,15 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'OrgSubscriptionTierPricing' }
     | { __typename: 'OrgSubscriptionTierLifetimePricing' }
     | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'CoachingSessionStudent' }
     | { __typename: 'CoachingSessionStudentPlan' }
-    | { __typename: 'Notification' }
     | { __typename: 'CoachingSessionReservation' }
     | { __typename: 'CoachingSessionReservationAttendee' }
     | { __typename: 'CoachAvailabilityRule' }
     | { __typename: 'CoachAvailabilityOverride' }
     | { __typename: 'CoachingSessionInstructor' }
     | { __typename: 'GiftedOrgSubscription' }
-    | { __typename: 'OrganizationSystemEmailTemplate' }
     | { __typename: 'OrganizationRole' }
     | { __typename: 'OrganizationMemberRoleAssignment' }
     | { __typename: 'AutomationTrigger' }
@@ -811,6 +2186,8 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'MatchingQuiz' }
     | { __typename: 'ExamQuiz' }
     | { __typename: 'Exam' }
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
     | { __typename: 'Forum' }
     | { __typename: 'Form' }
     | { __typename: 'OrgSubscriptionProduct' }
@@ -820,28 +2197,29 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'LegalDocument' }
     | { __typename: 'LegalDocumentAcceptance' }
     | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
     | { __typename: 'InstagramAutoDmRule' }
     | { __typename: 'TagGroup' }
     | { __typename: 'TagGroupTag' }
-    | { __typename: 'DocumentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'DocumentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, descriptionRich: { html: string, text: string } | null }
     | { __typename: 'InVideoQuiz' }
     | { __typename: 'Video' }
     | { __typename: 'VideoCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, video: { id: string, duration: number | null, status: VideoStatus, url: string | null, posterUrl: string | null, chaptersVttUrl: string | null, captions: Array<{ language: string, label: string, status: CaptionStatus, url: string | null }> } | null }
-    | { __typename: 'QuizCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, allowSkip: boolean, allowRetake: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, quiz:
-        | { __typename: 'MultipleChoiceQuiz', id: string, title: string, question: unknown, options: Array<{ content: unknown, description: unknown, isCorrect: boolean | null }> }
-        | { __typename: 'FreeResponseQuiz', sampleAnswer: unknown, id: string, title: string, question: unknown }
-        | { __typename: 'PhraseSelectionQuiz', paragraph: unknown, minSelections: number | null, maxSelections: number | null, id: string, title: string, question: unknown, selectablePhrases: Array<{ phraseId: string, content: unknown }> }
-        | { __typename: 'CategorizationQuiz', id: string, title: string, question: unknown, items: Array<{ id: string, content: unknown }>, groups: Array<{ id: string, content: unknown }> }
-        | { __typename: 'FillInBlankQuiz', content: unknown, id: string, title: string, question: unknown, blanks: Array<{ blankId: string }> }
-        | { __typename: 'OrderingQuiz', shuffleOnDisplay: boolean, id: string, title: string, question: unknown, items: Array<{ id: string, content: unknown }> }
-        | { __typename: 'MatchingQuiz', id: string, title: string, question: unknown, leftItems: Array<{ id: string, content: unknown }>, rightItems: Array<{ id: string, content: unknown }> }
-       | null, viewerLatestSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, gradeFeedback: unknown, selectedChoiceIndex: number | null, freeResponseAnswer: unknown, structuredAnswer: unknown, gradingDetails: unknown, submittedAt: string, selectedOption: { content: unknown, description: unknown, isCorrect: boolean | null } | null } | null, viewerBestSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, submittedAt: string } | null }
-    | { __typename: 'AssignmentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, allowRichText: boolean, allowFileUpload: boolean, allowMultipleSubmissions: boolean, dueDate: string | null, lateSubmissionDeadline: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, viewerLatestAssignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null }
-    | { __typename: 'ArticleCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, content: unknown, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
-    | { __typename: 'QuestionCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, question: unknown, hints: Array<unknown>, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
-    | { __typename: 'EmbedCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, url: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
-    | { __typename: 'ExamCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, instructions: unknown, quizCount: number | null, timeLimitSeconds: number | null, passingGradePercentage: number | null, maxAttempts: number | null, allowPause: boolean, allowBack: boolean, allowSkip: boolean, viewerCanStartSession: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, viewerCurrentSession: { id: string } | null, viewerLatestFinishedSession: { id: string } | null }
-    | { __typename: 'LiveCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, url: string | null, platform: string | null, startDate: string | null, endDate: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
+    | { __typename: 'QuizCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, allowSkip: boolean, allowRetake: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, descriptionRich: { html: string, text: string } | null, quiz:
+        | { __typename: 'MultipleChoiceQuiz', id: string, title: string, question: unknown, options: Array<{ content: unknown, description: unknown, isCorrect: boolean | null, contentRich: { html: string, text: string } | null, descriptionRich: { html: string, text: string } | null }>, questionRich: { html: string, text: string } | null }
+        | { __typename: 'FreeResponseQuiz', sampleAnswer: unknown, id: string, title: string, question: unknown, sampleAnswerRich: { html: string, text: string } | null, questionRich: { html: string, text: string } | null }
+        | { __typename: 'PhraseSelectionQuiz', paragraph: unknown, minSelections: number | null, maxSelections: number | null, id: string, title: string, question: unknown, paragraphRich: { html: string, text: string } | null, selectablePhrases: Array<{ phraseId: string, content: unknown, contentRich: { html: string, text: string } | null }>, questionRich: { html: string, text: string } | null }
+        | { __typename: 'CategorizationQuiz', id: string, title: string, question: unknown, items: Array<{ id: string, content: unknown, contentRich: { html: string, text: string } | null }>, groups: Array<{ id: string, content: unknown, contentRich: { html: string, text: string } | null }>, questionRich: { html: string, text: string } | null }
+        | { __typename: 'FillInBlankQuiz', content: unknown, id: string, title: string, question: unknown, contentRich: { html: string, text: string } | null, blanks: Array<{ blankId: string }>, questionRich: { html: string, text: string } | null }
+        | { __typename: 'OrderingQuiz', shuffleOnDisplay: boolean, id: string, title: string, question: unknown, items: Array<{ id: string, content: unknown, contentRich: { html: string, text: string } | null }>, questionRich: { html: string, text: string } | null }
+        | { __typename: 'MatchingQuiz', id: string, title: string, question: unknown, leftItems: Array<{ id: string, content: unknown, contentRich: { html: string, text: string } | null }>, rightItems: Array<{ id: string, content: unknown, contentRich: { html: string, text: string } | null }>, questionRich: { html: string, text: string } | null }
+       | null, viewerLatestSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, gradeFeedback: unknown, selectedChoiceIndex: number | null, freeResponseAnswer: unknown, structuredAnswer: unknown, gradingDetails: unknown, submittedAt: string, gradeFeedbackRich: { html: string, text: string } | null, freeResponseAnswerRich: { html: string, text: string } | null, selectedOption: { content: unknown, description: unknown, isCorrect: boolean | null, contentRich: { html: string, text: string } | null, descriptionRich: { html: string, text: string } | null } | null } | null, viewerBestSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, submittedAt: string } | null }
+    | { __typename: 'AssignmentCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, allowRichText: boolean, allowFileUpload: boolean, allowMultipleSubmissions: boolean, dueDate: string | null, lateSubmissionDeadline: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, descriptionRich: { html: string, text: string } | null, viewerLatestAssignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, freeResponseAnswerRich: { html: string, text: string } | null, gradeFeedbackRich: { html: string, text: string } | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null }
+    | { __typename: 'ArticleCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, content: unknown, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, contentRich: { html: string, text: string } | null }
+    | { __typename: 'QuestionCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, question: unknown, hints: Array<unknown>, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, descriptionRich: { html: string, text: string } | null, questionRich: { html: string, text: string } | null, hintsRich: Array<{ html: string, text: string }> }
+    | { __typename: 'EmbedCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, url: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, descriptionRich: { html: string, text: string } | null }
+    | { __typename: 'ExamCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, instructions: unknown, quizCount: number | null, timeLimitSeconds: number | null, passingGradePercentage: number | null, maxAttempts: number | null, allowPause: boolean, allowBack: boolean, allowSkip: boolean, viewerCanStartSession: boolean, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, instructionsRich: { html: string, text: string } | null, viewerCurrentSession: { id: string } | null, viewerLatestFinishedSession: { id: string } | null }
+    | { __typename: 'LiveCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, description: unknown, url: string | null, platform: string | null, startDate: string | null, endDate: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, descriptionRich: { html: string, text: string } | null }
     | { __typename: 'ForumCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null, forum: { id: string } | null }
     | { __typename: 'ScormPackage' }
     | { __typename: 'ScormCourseItem', id: string, title: string, slug: string, typeLabel: string | null, freeAccess: boolean, hidden: boolean, viewerHasAccess: boolean, releaseDate: string | null, dripType: DripType | null, dripDaysDelay: number | null, masteryScore: number | null, maxTimeAllowed: number | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }>, viewerProgress: { id: string, progress: number, status: ItemProgressStatus, updatedAt: string | null } | null }
@@ -860,23 +2238,36 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'PaymentFormQuestion' }
     | { __typename: 'SubscriptionPromotion' }
     | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
     | { __typename: 'OrganizationCommunitySettings' }
     | { __typename: 'CommunitySpaceGroup' }
     | { __typename: 'SubscriptionPromotionUsage' }
     | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
     | { __typename: 'OrganizationWhatsappNotificationSettings' }
     | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
     | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
     | { __typename: 'CommunitySpace' }
     | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
     | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
     | { __typename: 'CommunityEventWaitlistEntry' }
     | { __typename: 'CommunityEventRsvp' }
-    | { __typename: 'CommunityEventSeries' }
-    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'OrderBillingAddress' }
-    | { __typename: 'Gift' }
-    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrderRefund' }
     | { __typename: 'OrganizationPaymentMethod' }
     | { __typename: 'FormPaymentSession' }
     | { __typename: 'OrganizationAttachmentWatermarkSettings' }
@@ -887,16 +2278,15 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'OrderableGroupPrice' }
     | { __typename: 'CommunityPostAttachment' }
     | { __typename: 'CommunityChatMessageAttachment' }
-    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
     | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
     | { __typename: 'OrganizationForumSettings' }
     | { __typename: 'ForumSettings' }
     | { __typename: 'ForumPost' }
     | { __typename: 'ForumPostComment' }
     | { __typename: 'MailingListSubscription' }
     | { __typename: 'VideoChapters' }
-    | { __typename: 'FormQuestionSubmission' }
-    | { __typename: 'FormSession' }
     | { __typename: 'ExamSession' }
     | { __typename: 'FormResultPage' }
     | { __typename: 'FormCalculationResult' }
@@ -931,8 +2321,10 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'OrderLineItemsExportJob' }
     | { __typename: 'LegalDocumentAcceptanceExportJob' }
     | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
     | { __typename: 'ExclusionListEntriesExportJob' }
     | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
     | { __typename: 'GeneratedPageRule' }
     | { __typename: 'GeneratedPageOverride' }
     | { __typename: 'OrganizationRedirect' }
@@ -942,24 +2334,35 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'SocialPostSlide' }
     | { __typename: 'SocialPost' }
     | { __typename: 'OrganizationSocialPostTheme' }
-    | { __typename: 'GiftLineItem' }
     | { __typename: 'FormCalculation' }
-    | { __typename: 'CommunityPost' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
     | { __typename: 'NumericScaleGradingQuestion' }
     | { __typename: 'TextFeedbackGradingQuestion' }
     | { __typename: 'RubricGradingQuestion' }
     | { __typename: 'PassFailGradingQuestion' }
     | { __typename: 'DataProvenanceRecord' }
     | { __typename: 'WebPage' }
-    | { __typename: 'GeneratedPageBlockOverride' }
-    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebPageComponentTemplate' }
     | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
     | { __typename: 'WebsiteTemplate' }
     | { __typename: 'WebsiteTemplatePage' }
     | { __typename: 'OrganizationVideoWatermarkSettings' }
-    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrganizationMobileApp' }
     | { __typename: 'CustomFontFace' }
     | { __typename: 'CustomFont' }
     | { __typename: 'OrganizationLabelSettings' }
@@ -987,37 +2390,76 @@ export type SdkCourseItemDetailQuery = { node:
     | { __typename: 'EmailActivity' }
     | { __typename: 'ForumPostReaction' }
     | { __typename: 'ForumPostCommentReaction' }
-    | { __typename: 'CommunityComment' }
-    | { __typename: 'CommunityBadge' }
-    | { __typename: 'CommunityBadgeHolder' }
     | { __typename: 'CommunityContentReport' }
-    | { __typename: 'CommunityBan' }
+    | { __typename: 'CommunityModerationLogEntry' }
     | { __typename: 'OrganizationMemberCustomFieldDefinition' }
     | { __typename: 'GlobalEmailSuppression' }
     | { __typename: 'FormNavigationSettings' }
-    | { __typename: 'Referral' }
-    | { __typename: 'ReferralCode' }
-    | { __typename: 'ReferralPartner' }
-    | { __typename: 'ReferralReward' }
     | { __typename: 'XapiCredential' }
     | { __typename: 'XapiStatement' }
     | { __typename: 'Cmi5Au' }
     | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
     | { __typename: 'PayoutTransfer' }
-    | { __typename: 'ScormSession' }
-    | { __typename: 'SocialPostPublication' }
-    | { __typename: 'OrgRouteManifestEntry' }
-    | { __typename: 'SiteBundle' }
     | { __typename: 'OrgApiKey' }
-    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
    | null };
+
+export type SdkCreateCommunityAttachmentUploadMutationVariables = Exact<{
+  input: CreateCommunityAttachmentUploadInput;
+}>;
+
+
+export type SdkCreateCommunityAttachmentUploadMutation = { createCommunityAttachmentUpload: { attachmentId: string | null, s3Key: string | null, apiUrl: string | null, formFields: unknown, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkCreateCommunityCommentMutationVariables = Exact<{
+  input: CreateCommunityCommentInput;
+}>;
+
+
+export type SdkCreateCommunityCommentMutation = { createCommunityComment: { clientMutationToken: string | null, communityComment: { id: string, parentCommentId: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null } | null, communityCommentEdge: { cursor: string, node: { id: string, parentCommentId: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, editedAt: string | null, replyCount: number, viewerIsAuthor: boolean, viewerCanReply: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }> } } | null, communityPost: { id: string, commentCount: number } | null, parentComment: { id: string, replyCount: number } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkCreateCommunityPostMutationVariables = Exact<{
+  input: CreateCommunityPostInput;
+}>;
+
+
+export type SdkCreateCommunityPostMutation = { createCommunityPost: { communityPost: { id: string, title: string | null, content: unknown, status: CommunityModerationStatus, createdAt: string, space: { id: string, slug: string } | null } | null, communityPostEdge: { cursor: string, node: { id: string, title: string | null, content: unknown, type: CommunityPostType, status: CommunityModerationStatus, createdAt: string, lastActivityAt: string, editedAt: string | null, isPinned: boolean, isLocked: boolean, pinnedAt: string | null, commentCount: number, viewerIsAuthor: boolean, viewerCanComment: boolean, viewerCanEdit: boolean, viewerCanDelete: boolean, viewerCanReport: boolean, viewerHasReported: boolean, viewerContentWithheld: boolean, contentRich: { html: string, text: string } | null, space: { id: string, name: string, slug: string } | null, author: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }>, reactors: { edges: Array<{ kind: CommunityReactionKind, reactedAt: string, node: { id: string, displayName: string, image: string | null, isStaff: boolean, viewerIsSelf: boolean } | null }> } | null, attachments: Array<{ id: string, fileName: string, contentType: string, sizeBytes: number, scanStatus: CommunityAttachmentScanStatus, url: string | null }> } } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkCreateDraftAssignmentSubmissionMutationVariables = Exact<{
   input: CreateDraftAssignmentSubmissionInput;
 }>;
 
 
-export type SdkCreateDraftAssignmentSubmissionMutation = { createDraftAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkCreateDraftAssignmentSubmissionMutation = { createDraftAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkCreateForumPostMutationVariables = Exact<{
   input: CreateForumPostInput;
@@ -1027,7 +2469,7 @@ export type SdkCreateForumPostMutationVariables = Exact<{
 export type SdkCreateForumPostMutation = { createForumPost: { forumPost: { id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, author:
         | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
         | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
-       | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+       | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkCreateForumPostCommentMutationVariables = Exact<{
   input: CreateForumPostCommentInput;
@@ -1037,14 +2479,14 @@ export type SdkCreateForumPostCommentMutationVariables = Exact<{
 export type SdkCreateForumPostCommentMutation = { createForumPostComment: { forumPostComment: { id: string, content: unknown, createdAt: string, status: ForumPostStatus, author:
         | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
         | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
-       | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+       | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkCreateOrderMutationVariables = Exact<{
   input: CreateOrderInput;
 }>;
 
 
-export type SdkCreateOrderMutation = { createOrder: { order: { id: string, slug: string, status: OrderStatus, sellingPrice: { presentmentMoney: { amount: string, currency: Currency } }, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } } } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkCreateOrderMutation = { createOrder: { order: { id: string, slug: string, status: OrderStatus, sellingPrice: { presentmentMoney: { amount: string, currency: Currency } }, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } } } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkCurriculumQueryVariables = Exact<{
   termId: string | number;
@@ -1060,6 +2502,9 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'SystemEmail' }
     | { __typename: 'SystemEmailTrackingEvent' }
     | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
     | { __typename: 'Attachment' }
     | { __typename: 'Campaign' }
     | { __typename: 'MailingList' }
@@ -1088,12 +2533,14 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'OrderTransaction' }
     | { __typename: 'Order' }
     | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
     | { __typename: 'Cart' }
     | { __typename: 'Bundle' }
     | { __typename: 'ParasutOrganizationBillingIntegration' }
     | { __typename: 'PiOrganizationBillingIntegration' }
     | { __typename: 'ReceiptOrganizationBillingIntegration' }
     | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
     | { __typename: 'CourseInstructor' }
     | { __typename: 'CourseAcademicTermStudent' }
     | { __typename: 'CoachingSession' }
@@ -1112,16 +2559,15 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'OrgSubscriptionTierPricing' }
     | { __typename: 'OrgSubscriptionTierLifetimePricing' }
     | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'CoachingSessionStudent' }
     | { __typename: 'CoachingSessionStudentPlan' }
-    | { __typename: 'Notification' }
     | { __typename: 'CoachingSessionReservation' }
     | { __typename: 'CoachingSessionReservationAttendee' }
     | { __typename: 'CoachAvailabilityRule' }
     | { __typename: 'CoachAvailabilityOverride' }
     | { __typename: 'CoachingSessionInstructor' }
     | { __typename: 'GiftedOrgSubscription' }
-    | { __typename: 'OrganizationSystemEmailTemplate' }
     | { __typename: 'OrganizationRole' }
     | { __typename: 'OrganizationMemberRoleAssignment' }
     | { __typename: 'AutomationTrigger' }
@@ -1137,6 +2583,8 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'MatchingQuiz' }
     | { __typename: 'ExamQuiz' }
     | { __typename: 'Exam' }
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
     | { __typename: 'Forum' }
     | { __typename: 'Form' }
     | { __typename: 'OrgSubscriptionProduct' }
@@ -1146,6 +2594,7 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'LegalDocument' }
     | { __typename: 'LegalDocumentAcceptance' }
     | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
     | { __typename: 'InstagramAutoDmRule' }
     | { __typename: 'TagGroup' }
     | { __typename: 'TagGroupTag' }
@@ -1178,23 +2627,36 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'PaymentFormQuestion' }
     | { __typename: 'SubscriptionPromotion' }
     | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
     | { __typename: 'OrganizationCommunitySettings' }
     | { __typename: 'CommunitySpaceGroup' }
     | { __typename: 'SubscriptionPromotionUsage' }
     | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
     | { __typename: 'OrganizationWhatsappNotificationSettings' }
     | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
     | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
     | { __typename: 'CommunitySpace' }
     | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
     | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
     | { __typename: 'CommunityEventWaitlistEntry' }
     | { __typename: 'CommunityEventRsvp' }
-    | { __typename: 'CommunityEventSeries' }
-    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'OrderBillingAddress' }
-    | { __typename: 'Gift' }
-    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrderRefund' }
     | { __typename: 'OrganizationPaymentMethod' }
     | { __typename: 'FormPaymentSession' }
     | { __typename: 'OrganizationAttachmentWatermarkSettings' }
@@ -1205,16 +2667,15 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'OrderableGroupPrice' }
     | { __typename: 'CommunityPostAttachment' }
     | { __typename: 'CommunityChatMessageAttachment' }
-    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
     | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
     | { __typename: 'OrganizationForumSettings' }
     | { __typename: 'ForumSettings' }
     | { __typename: 'ForumPost' }
     | { __typename: 'ForumPostComment' }
     | { __typename: 'MailingListSubscription' }
     | { __typename: 'VideoChapters' }
-    | { __typename: 'FormQuestionSubmission' }
-    | { __typename: 'FormSession' }
     | { __typename: 'ExamSession' }
     | { __typename: 'FormResultPage' }
     | { __typename: 'FormCalculationResult' }
@@ -1249,8 +2710,10 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'OrderLineItemsExportJob' }
     | { __typename: 'LegalDocumentAcceptanceExportJob' }
     | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
     | { __typename: 'ExclusionListEntriesExportJob' }
     | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
     | { __typename: 'GeneratedPageRule' }
     | { __typename: 'GeneratedPageOverride' }
     | { __typename: 'OrganizationRedirect' }
@@ -1260,24 +2723,35 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'SocialPostSlide' }
     | { __typename: 'SocialPost' }
     | { __typename: 'OrganizationSocialPostTheme' }
-    | { __typename: 'GiftLineItem' }
     | { __typename: 'FormCalculation' }
-    | { __typename: 'CommunityPost' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
     | { __typename: 'NumericScaleGradingQuestion' }
     | { __typename: 'TextFeedbackGradingQuestion' }
     | { __typename: 'RubricGradingQuestion' }
     | { __typename: 'PassFailGradingQuestion' }
     | { __typename: 'DataProvenanceRecord' }
     | { __typename: 'WebPage' }
-    | { __typename: 'GeneratedPageBlockOverride' }
-    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebPageComponentTemplate' }
     | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
     | { __typename: 'WebsiteTemplate' }
     | { __typename: 'WebsiteTemplatePage' }
     | { __typename: 'OrganizationVideoWatermarkSettings' }
-    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrganizationMobileApp' }
     | { __typename: 'CustomFontFace' }
     | { __typename: 'CustomFont' }
     | { __typename: 'OrganizationLabelSettings' }
@@ -1305,30 +2779,62 @@ export type SdkCurriculumQuery = { node:
     | { __typename: 'EmailActivity' }
     | { __typename: 'ForumPostReaction' }
     | { __typename: 'ForumPostCommentReaction' }
-    | { __typename: 'CommunityComment' }
-    | { __typename: 'CommunityBadge' }
-    | { __typename: 'CommunityBadgeHolder' }
     | { __typename: 'CommunityContentReport' }
-    | { __typename: 'CommunityBan' }
+    | { __typename: 'CommunityModerationLogEntry' }
     | { __typename: 'OrganizationMemberCustomFieldDefinition' }
     | { __typename: 'GlobalEmailSuppression' }
     | { __typename: 'FormNavigationSettings' }
-    | { __typename: 'Referral' }
-    | { __typename: 'ReferralCode' }
-    | { __typename: 'ReferralPartner' }
-    | { __typename: 'ReferralReward' }
     | { __typename: 'XapiCredential' }
     | { __typename: 'XapiStatement' }
     | { __typename: 'Cmi5Au' }
     | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
     | { __typename: 'PayoutTransfer' }
-    | { __typename: 'ScormSession' }
-    | { __typename: 'SocialPostPublication' }
-    | { __typename: 'OrgRouteManifestEntry' }
-    | { __typename: 'SiteBundle' }
     | { __typename: 'OrgApiKey' }
-    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
    | null };
+
+export type SdkDeleteCommunityCommentMutationVariables = Exact<{
+  input: DeleteCommunityCommentInput;
+}>;
+
+
+export type SdkDeleteCommunityCommentMutation = { deleteCommunityComment: { deletedCommunityCommentId: string | null, communityPost: { id: string, commentCount: number } | null, parentComment: { id: string, replyCount: number } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkDeleteCommunityPostMutationVariables = Exact<{
+  input: DeleteCommunityPostInput;
+}>;
+
+
+export type SdkDeleteCommunityPostMutation = { deleteCommunityPost: { deletedCommunityPostId: string | null, communitySpace: { id: string, postCount: number | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkDigitalProductQueryVariables = Exact<{
   organizationSlug: string;
@@ -1336,7 +2842,32 @@ export type SdkDigitalProductQueryVariables = Exact<{
 }>;
 
 
-export type SdkDigitalProductQuery = { digitalProduct: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } | null };
+export type SdkDigitalProductQuery = { digitalProduct: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerBlockedByPurchaseGate: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } | null };
+
+export type SdkFormQueryVariables = Exact<{
+  organizationSlug: string;
+  slug: string;
+}>;
+
+
+export type SdkFormQuery = { organization: { id: string, form: { id: string, title: string, slug: string, type: FormType, publishStatus: FormPublishStatus, sections: Array<{ id: string, title: string, questions: Array<
+          | { __typename: 'PaymentFormQuestion', currency: Currency, minPrice: number, maxPrice: number | null, payWhatYouWant: boolean, description: string | null, id: string, question: string, required: boolean }
+          | { __typename: 'TextFormQuestion', minLength: number | null, maxLength: number | null, placeholder: string | null, id: string, question: string, required: boolean }
+          | { __typename: 'ContactFormQuestion', id: string, question: string, required: boolean, contactType: ContactFormQuestionType }
+          | { __typename: 'TextareaFormQuestion', minLength: number | null, maxLength: number | null, placeholder: string | null, allowRichText: boolean, id: string, question: string, required: boolean }
+          | { __typename: 'RadioFormQuestion', options: Array<string>, allowOther: boolean, otherPlaceholder: string | null, otherMinLength: number | null, otherMaxLength: number | null, id: string, question: string, required: boolean }
+          | { __typename: 'CheckboxFormQuestion', options: Array<string>, minChoices: number | null, maxChoices: number | null, allowOther: boolean, otherPlaceholder: string | null, otherMinLength: number | null, otherMaxLength: number | null, id: string, question: string, required: boolean }
+          | { __typename: 'SelectFormQuestion', options: Array<string>, placeholder: string | null, allowOther: boolean, otherPlaceholder: string | null, otherMinLength: number | null, otherMaxLength: number | null, id: string, question: string, required: boolean }
+          | { __typename: 'MatrixFormQuestion', rows: Array<string>, columns: Array<string>, id: string, question: string, required: boolean }
+          | { __typename: 'DateFormQuestion', id: string, question: string, required: boolean, dateType: DateFormQuestionType }
+          | { __typename: 'MultiselectFormQuestion', options: Array<string>, placeholder: string | null, minChoices: number | null, maxChoices: number | null, allowOther: boolean, otherPlaceholder: string | null, otherMinLength: number | null, otherMaxLength: number | null, id: string, question: string, required: boolean }
+          | { __typename: 'LinearScaleFormQuestion', min: number, max: number, step: number, default: number | null, minLabel: string | null, maxLabel: string | null, centerLabel: string | null, id: string, question: string, required: boolean }
+          | { __typename: 'FileFormQuestion', id: string, question: string, required: boolean, fileRestrictions: { allowedFileTypes: Array<string> | null, minNumberOfFiles: number | null, maxNumberOfFiles: number | null, maxFileSize: number | null, maxTotalFileSize: number | null, maxDurationSeconds: number | null } | null }
+          | { __typename: 'ContentFormQuestion', content: unknown, id: string, question: string, required: boolean }
+          | { __typename: 'TagGroupSelectFormQuestion', tagGroupId: string, allowMultiple: boolean, minSelections: number | null, maxSelections: number | null, allowOther: boolean, otherPlaceholder: string | null, otherMinLength: number | null, otherMaxLength: number | null, id: string, question: string, required: boolean, availableTags: Array<{ id: string, name: string, color: string | null }> }
+          | { __typename: 'TagSelectFormQuestion', tagIds: Array<string>, allowMultiple: boolean, minSelections: number | null, maxSelections: number | null, allowOther: boolean, otherPlaceholder: string | null, otherMinLength: number | null, otherMaxLength: number | null, id: string, question: string, required: boolean, tags: Array<{ id: string, name: string, color: string | null }> }
+          | { __typename: 'CustomFieldFormQuestion', customFieldDefinitionId: string, id: string, question: string, required: boolean, customFieldDefinition: { id: string, title: string, type: CustomFieldDefinitionType, validationSchema: unknown } | null }
+        > }> } | null } | null };
 
 export type SdkForumQueryVariables = Exact<{
   forumId: string | number;
@@ -1356,6 +2887,9 @@ export type SdkForumQuery = { node:
     | { __typename: 'SystemEmail' }
     | { __typename: 'SystemEmailTrackingEvent' }
     | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
     | { __typename: 'Attachment' }
     | { __typename: 'Campaign' }
     | { __typename: 'MailingList' }
@@ -1369,12 +2903,14 @@ export type SdkForumQuery = { node:
     | { __typename: 'OrderTransaction' }
     | { __typename: 'Order' }
     | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
     | { __typename: 'Cart' }
     | { __typename: 'Bundle' }
     | { __typename: 'ParasutOrganizationBillingIntegration' }
     | { __typename: 'PiOrganizationBillingIntegration' }
     | { __typename: 'ReceiptOrganizationBillingIntegration' }
     | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
     | { __typename: 'CourseInstructor' }
     | { __typename: 'CourseAcademicTermStudent' }
     | { __typename: 'CoachingSession' }
@@ -1393,16 +2929,15 @@ export type SdkForumQuery = { node:
     | { __typename: 'OrgSubscriptionTierPricing' }
     | { __typename: 'OrgSubscriptionTierLifetimePricing' }
     | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'CoachingSessionStudent' }
     | { __typename: 'CoachingSessionStudentPlan' }
-    | { __typename: 'Notification' }
     | { __typename: 'CoachingSessionReservation' }
     | { __typename: 'CoachingSessionReservationAttendee' }
     | { __typename: 'CoachAvailabilityRule' }
     | { __typename: 'CoachAvailabilityOverride' }
     | { __typename: 'CoachingSessionInstructor' }
     | { __typename: 'GiftedOrgSubscription' }
-    | { __typename: 'OrganizationSystemEmailTemplate' }
     | { __typename: 'OrganizationRole' }
     | { __typename: 'OrganizationMemberRoleAssignment' }
     | { __typename: 'AutomationTrigger' }
@@ -1418,7 +2953,9 @@ export type SdkForumQuery = { node:
     | { __typename: 'MatchingQuiz' }
     | { __typename: 'ExamQuiz' }
     | { __typename: 'Exam' }
-    | { __typename: 'Forum', id: string, title: string, slug: string, description: unknown, viewerCanPost: boolean, viewerCanComment: boolean, viewerCanReact: boolean, effectiveSettings: { autoApprovePosts: boolean, autoApproveComments: boolean, postCreationEnabled: boolean, commentCreationEnabled: boolean, reactionType: ForumReactionType }, posts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, positiveReactionCount: number | null, negativeReactionCount: number | null, comments: { totalCount: number }, viewerReaction: { id: string, isPositive: boolean | null } | null, author:
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
+    | { __typename: 'Forum', id: string, title: string, slug: string, description: unknown, viewerCanPost: boolean, viewerCanComment: boolean, viewerCanReact: boolean, descriptionRich: { html: string, text: string } | null, effectiveSettings: { autoApprovePosts: boolean, autoApproveComments: boolean, postCreationEnabled: boolean, commentCreationEnabled: boolean, reactionType: ForumReactionType }, posts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, positiveReactionCount: number | null, negativeReactionCount: number | null, contentRich: { html: string, text: string } | null, comments: { totalCount: number }, viewerReaction: { id: string, isPositive: boolean | null } | null, author:
               | { __typename: 'OrganizationStudent', id: string, givenName: string | null, lastName: string | null, image: string | null }
               | { __typename: 'OrganizationMember', id: string, givenName: string | null, lastName: string | null, image: string | null }
              | null } }> } }
@@ -1430,6 +2967,7 @@ export type SdkForumQuery = { node:
     | { __typename: 'LegalDocument' }
     | { __typename: 'LegalDocumentAcceptance' }
     | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
     | { __typename: 'InstagramAutoDmRule' }
     | { __typename: 'TagGroup' }
     | { __typename: 'TagGroupTag' }
@@ -1462,23 +3000,36 @@ export type SdkForumQuery = { node:
     | { __typename: 'PaymentFormQuestion' }
     | { __typename: 'SubscriptionPromotion' }
     | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
     | { __typename: 'OrganizationCommunitySettings' }
     | { __typename: 'CommunitySpaceGroup' }
     | { __typename: 'SubscriptionPromotionUsage' }
     | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
     | { __typename: 'OrganizationWhatsappNotificationSettings' }
     | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
     | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
     | { __typename: 'CommunitySpace' }
     | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
     | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
     | { __typename: 'CommunityEventWaitlistEntry' }
     | { __typename: 'CommunityEventRsvp' }
-    | { __typename: 'CommunityEventSeries' }
-    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'OrderBillingAddress' }
-    | { __typename: 'Gift' }
-    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrderRefund' }
     | { __typename: 'OrganizationPaymentMethod' }
     | { __typename: 'FormPaymentSession' }
     | { __typename: 'OrganizationAttachmentWatermarkSettings' }
@@ -1489,16 +3040,15 @@ export type SdkForumQuery = { node:
     | { __typename: 'OrderableGroupPrice' }
     | { __typename: 'CommunityPostAttachment' }
     | { __typename: 'CommunityChatMessageAttachment' }
-    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
     | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
     | { __typename: 'OrganizationForumSettings' }
     | { __typename: 'ForumSettings' }
     | { __typename: 'ForumPost' }
     | { __typename: 'ForumPostComment' }
     | { __typename: 'MailingListSubscription' }
     | { __typename: 'VideoChapters' }
-    | { __typename: 'FormQuestionSubmission' }
-    | { __typename: 'FormSession' }
     | { __typename: 'ExamSession' }
     | { __typename: 'FormResultPage' }
     | { __typename: 'FormCalculationResult' }
@@ -1533,8 +3083,10 @@ export type SdkForumQuery = { node:
     | { __typename: 'OrderLineItemsExportJob' }
     | { __typename: 'LegalDocumentAcceptanceExportJob' }
     | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
     | { __typename: 'ExclusionListEntriesExportJob' }
     | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
     | { __typename: 'GeneratedPageRule' }
     | { __typename: 'GeneratedPageOverride' }
     | { __typename: 'OrganizationRedirect' }
@@ -1544,24 +3096,35 @@ export type SdkForumQuery = { node:
     | { __typename: 'SocialPostSlide' }
     | { __typename: 'SocialPost' }
     | { __typename: 'OrganizationSocialPostTheme' }
-    | { __typename: 'GiftLineItem' }
     | { __typename: 'FormCalculation' }
-    | { __typename: 'CommunityPost' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
     | { __typename: 'NumericScaleGradingQuestion' }
     | { __typename: 'TextFeedbackGradingQuestion' }
     | { __typename: 'RubricGradingQuestion' }
     | { __typename: 'PassFailGradingQuestion' }
     | { __typename: 'DataProvenanceRecord' }
     | { __typename: 'WebPage' }
-    | { __typename: 'GeneratedPageBlockOverride' }
-    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebPageComponentTemplate' }
     | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
     | { __typename: 'WebsiteTemplate' }
     | { __typename: 'WebsiteTemplatePage' }
     | { __typename: 'OrganizationVideoWatermarkSettings' }
-    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrganizationMobileApp' }
     | { __typename: 'CustomFontFace' }
     | { __typename: 'CustomFont' }
     | { __typename: 'OrganizationLabelSettings' }
@@ -1589,29 +3152,47 @@ export type SdkForumQuery = { node:
     | { __typename: 'EmailActivity' }
     | { __typename: 'ForumPostReaction' }
     | { __typename: 'ForumPostCommentReaction' }
-    | { __typename: 'CommunityComment' }
-    | { __typename: 'CommunityBadge' }
-    | { __typename: 'CommunityBadgeHolder' }
     | { __typename: 'CommunityContentReport' }
-    | { __typename: 'CommunityBan' }
+    | { __typename: 'CommunityModerationLogEntry' }
     | { __typename: 'OrganizationMemberCustomFieldDefinition' }
     | { __typename: 'GlobalEmailSuppression' }
     | { __typename: 'FormNavigationSettings' }
-    | { __typename: 'Referral' }
-    | { __typename: 'ReferralCode' }
-    | { __typename: 'ReferralPartner' }
-    | { __typename: 'ReferralReward' }
     | { __typename: 'XapiCredential' }
     | { __typename: 'XapiStatement' }
     | { __typename: 'Cmi5Au' }
     | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
     | { __typename: 'PayoutTransfer' }
-    | { __typename: 'ScormSession' }
-    | { __typename: 'SocialPostPublication' }
-    | { __typename: 'OrgRouteManifestEntry' }
-    | { __typename: 'SiteBundle' }
     | { __typename: 'OrgApiKey' }
-    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
    | null };
 
 export type SdkForumPostQueryVariables = Exact<{
@@ -1631,6 +3212,9 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'SystemEmail' }
     | { __typename: 'SystemEmailTrackingEvent' }
     | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
     | { __typename: 'Attachment' }
     | { __typename: 'Campaign' }
     | { __typename: 'MailingList' }
@@ -1644,12 +3228,14 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'OrderTransaction' }
     | { __typename: 'Order' }
     | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
     | { __typename: 'Cart' }
     | { __typename: 'Bundle' }
     | { __typename: 'ParasutOrganizationBillingIntegration' }
     | { __typename: 'PiOrganizationBillingIntegration' }
     | { __typename: 'ReceiptOrganizationBillingIntegration' }
     | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
     | { __typename: 'CourseInstructor' }
     | { __typename: 'CourseAcademicTermStudent' }
     | { __typename: 'CoachingSession' }
@@ -1668,16 +3254,15 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'OrgSubscriptionTierPricing' }
     | { __typename: 'OrgSubscriptionTierLifetimePricing' }
     | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'CoachingSessionStudent' }
     | { __typename: 'CoachingSessionStudentPlan' }
-    | { __typename: 'Notification' }
     | { __typename: 'CoachingSessionReservation' }
     | { __typename: 'CoachingSessionReservationAttendee' }
     | { __typename: 'CoachAvailabilityRule' }
     | { __typename: 'CoachAvailabilityOverride' }
     | { __typename: 'CoachingSessionInstructor' }
     | { __typename: 'GiftedOrgSubscription' }
-    | { __typename: 'OrganizationSystemEmailTemplate' }
     | { __typename: 'OrganizationRole' }
     | { __typename: 'OrganizationMemberRoleAssignment' }
     | { __typename: 'AutomationTrigger' }
@@ -1693,6 +3278,8 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'MatchingQuiz' }
     | { __typename: 'ExamQuiz' }
     | { __typename: 'Exam' }
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
     | { __typename: 'Forum' }
     | { __typename: 'Form' }
     | { __typename: 'OrgSubscriptionProduct' }
@@ -1702,6 +3289,7 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'LegalDocument' }
     | { __typename: 'LegalDocumentAcceptance' }
     | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
     | { __typename: 'InstagramAutoDmRule' }
     | { __typename: 'TagGroup' }
     | { __typename: 'TagGroupTag' }
@@ -1734,23 +3322,36 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'PaymentFormQuestion' }
     | { __typename: 'SubscriptionPromotion' }
     | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
     | { __typename: 'OrganizationCommunitySettings' }
     | { __typename: 'CommunitySpaceGroup' }
     | { __typename: 'SubscriptionPromotionUsage' }
     | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
     | { __typename: 'OrganizationWhatsappNotificationSettings' }
     | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
     | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
     | { __typename: 'CommunitySpace' }
     | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
     | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
     | { __typename: 'CommunityEventWaitlistEntry' }
     | { __typename: 'CommunityEventRsvp' }
-    | { __typename: 'CommunityEventSeries' }
-    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
     | { __typename: 'OrderBillingAddress' }
-    | { __typename: 'Gift' }
-    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'OrderRefund' }
     | { __typename: 'OrganizationPaymentMethod' }
     | { __typename: 'FormPaymentSession' }
     | { __typename: 'OrganizationAttachmentWatermarkSettings' }
@@ -1761,8 +3362,9 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'OrderableGroupPrice' }
     | { __typename: 'CommunityPostAttachment' }
     | { __typename: 'CommunityChatMessageAttachment' }
-    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
     | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
     | { __typename: 'OrganizationForumSettings' }
     | { __typename: 'ForumSettings' }
     | { __typename: 'ForumPost', id: string, slug: string | null, title: string | null, content: unknown, createdAt: string, status: ForumPostStatus, positiveReactionCount: number | null, negativeReactionCount: number | null, viewerReaction: { id: string, isPositive: boolean | null } | null, author:
@@ -1775,8 +3377,6 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'ForumPostComment' }
     | { __typename: 'MailingListSubscription' }
     | { __typename: 'VideoChapters' }
-    | { __typename: 'FormQuestionSubmission' }
-    | { __typename: 'FormSession' }
     | { __typename: 'ExamSession' }
     | { __typename: 'FormResultPage' }
     | { __typename: 'FormCalculationResult' }
@@ -1811,8 +3411,10 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'OrderLineItemsExportJob' }
     | { __typename: 'LegalDocumentAcceptanceExportJob' }
     | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
     | { __typename: 'ExclusionListEntriesExportJob' }
     | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
     | { __typename: 'GeneratedPageRule' }
     | { __typename: 'GeneratedPageOverride' }
     | { __typename: 'OrganizationRedirect' }
@@ -1822,24 +3424,35 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'SocialPostSlide' }
     | { __typename: 'SocialPost' }
     | { __typename: 'OrganizationSocialPostTheme' }
-    | { __typename: 'GiftLineItem' }
     | { __typename: 'FormCalculation' }
-    | { __typename: 'CommunityPost' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
     | { __typename: 'NumericScaleGradingQuestion' }
     | { __typename: 'TextFeedbackGradingQuestion' }
     | { __typename: 'RubricGradingQuestion' }
     | { __typename: 'PassFailGradingQuestion' }
     | { __typename: 'DataProvenanceRecord' }
     | { __typename: 'WebPage' }
-    | { __typename: 'GeneratedPageBlockOverride' }
-    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
     | { __typename: 'WebPageComponentTemplate' }
     | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
     | { __typename: 'WebsiteTemplate' }
     | { __typename: 'WebsiteTemplatePage' }
     | { __typename: 'OrganizationVideoWatermarkSettings' }
-    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrganizationMobileApp' }
     | { __typename: 'CustomFontFace' }
     | { __typename: 'CustomFont' }
     | { __typename: 'OrganizationLabelSettings' }
@@ -1867,29 +3480,47 @@ export type SdkForumPostQuery = { node:
     | { __typename: 'EmailActivity' }
     | { __typename: 'ForumPostReaction' }
     | { __typename: 'ForumPostCommentReaction' }
-    | { __typename: 'CommunityComment' }
-    | { __typename: 'CommunityBadge' }
-    | { __typename: 'CommunityBadgeHolder' }
     | { __typename: 'CommunityContentReport' }
-    | { __typename: 'CommunityBan' }
+    | { __typename: 'CommunityModerationLogEntry' }
     | { __typename: 'OrganizationMemberCustomFieldDefinition' }
     | { __typename: 'GlobalEmailSuppression' }
     | { __typename: 'FormNavigationSettings' }
-    | { __typename: 'Referral' }
-    | { __typename: 'ReferralCode' }
-    | { __typename: 'ReferralPartner' }
-    | { __typename: 'ReferralReward' }
     | { __typename: 'XapiCredential' }
     | { __typename: 'XapiStatement' }
     | { __typename: 'Cmi5Au' }
     | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
     | { __typename: 'PayoutTransfer' }
-    | { __typename: 'ScormSession' }
-    | { __typename: 'SocialPostPublication' }
-    | { __typename: 'OrgRouteManifestEntry' }
-    | { __typename: 'SiteBundle' }
     | { __typename: 'OrgApiKey' }
-    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
    | null };
 
 export type SdkGetAttachmentUrlMutationVariables = Exact<{
@@ -1897,7 +3528,21 @@ export type SdkGetAttachmentUrlMutationVariables = Exact<{
 }>;
 
 
-export type SdkGetAttachmentUrlMutation = { getAttachmentUrl: { url: string | null, watermarkJob: { id: string, status: AttachmentWatermarkJobStatus, url: string | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkGetAttachmentUrlMutation = { getAttachmentUrl: { url: string | null, watermarkJob: { id: string, status: AttachmentWatermarkJobStatus, url: string | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkJoinCommunitySpaceMutationVariables = Exact<{
+  input: JoinCommunitySpaceInput;
+}>;
+
+
+export type SdkJoinCommunitySpaceMutation = { joinCommunitySpace: { communitySpace: { id: string, viewerCanPost: boolean, viewerCanJoin: boolean, viewerCanLeave: boolean, viewerMembership: { id: string, role: CommunitySpaceMemberRole, status: CommunitySpaceMemberStatus } | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkLeaveCommunitySpaceMutationVariables = Exact<{
+  input: LeaveCommunitySpaceInput;
+}>;
+
+
+export type SdkLeaveCommunitySpaceMutation = { leaveCommunitySpace: { communitySpace: { id: string, viewerCanPost: boolean, viewerCanJoin: boolean, viewerCanLeave: boolean, viewerMembership: { id: string, role: CommunitySpaceMemberRole, status: CommunitySpaceMemberStatus } | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkLiveEventQueryVariables = Exact<{
   organizationSlug: string;
@@ -1905,26 +3550,26 @@ export type SdkLiveEventQueryVariables = Exact<{
 }>;
 
 
-export type SdkLiveEventQuery = { liveEvent: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } | null };
+export type SdkLiveEventQuery = { liveEvent: { id: string, title: string, slug: string, shortDescription: string | null, viewerCanOrder: boolean, viewerBlockedByPurchaseGate: boolean, viewerCanOrderAsGift: boolean, salesPaused: boolean, remainingCapacity: number | null, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null } | null };
 
 export type SdkLoginWithOtpMutationVariables = Exact<{
   input: LoginWithOtpInput;
 }>;
 
 
-export type SdkLoginWithOtpMutation = { loginWithOtp: { credentials: { accessToken: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkLoginWithOtpMutation = { loginWithOtp: { credentials: { accessToken: string } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkLoginWithPasswordMutationVariables = Exact<{
   input: LoginWithPasswordInput;
 }>;
 
 
-export type SdkLoginWithPasswordMutation = { loginWithPassword: { credentials: { accessToken: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkLoginWithPasswordMutation = { loginWithPassword: { credentials: { accessToken: string } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkLogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SdkLogoutMutation = { logout: { userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkLogoutMutation = { logout: { userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkMarkCartItemAsGiftMutationVariables = Exact<{
   input: MarkCartItemAsGiftInput;
@@ -1938,7 +3583,14 @@ export type SdkMarkCartItemAsGiftMutation = { markCartItemAsGift: { cart: { id: 
           | { __typename: 'DigitalProduct', id: string }
           | { __typename: 'LiveEvent', id: string }
           | { __typename: 'OrgSubscriptionTier', id: string }
-         }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+         }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkMarkCommunitySpaceReadMutationVariables = Exact<{
+  input: MarkCommunitySpaceReadInput;
+}>;
+
+
+export type SdkMarkCommunitySpaceReadMutation = { markCommunitySpaceRead: { communitySpace: { id: string, viewerLastReadAt: string | null, viewerUnreadPostCount: number } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkOrderQueryVariables = Exact<{
   slug: string;
@@ -1954,12 +3606,356 @@ export type SdkOrderQuery = { order: { id: string, slug: string, status: OrderSt
         | { __typename: 'OrgSubscriptionTier', id: string, slug: string, tierName: string }
        | null }> } | null };
 
+export type SdkOrderableJsonLdFactsQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SdkOrderableJsonLdFactsQuery = { node:
+    | { __typename: 'Organization', id: string }
+    | { __typename: 'OrganizationMember', id: string }
+    | { __typename: 'User', id: string }
+    | { __typename: 'OrganizationEmailSettings', id: string }
+    | { __typename: 'OrganizationStudent', id: string }
+    | { __typename: 'SystemEmail', id: string }
+    | { __typename: 'SystemEmailTrackingEvent', id: string }
+    | { __typename: 'EmailUsagePeriod', id: string }
+    | { __typename: 'OrganizationSystemEmailTemplate', id: string }
+    | { __typename: 'StudentDevice', id: string }
+    | { __typename: 'StudentDeviceSession', id: string }
+    | { __typename: 'Attachment', id: string }
+    | { __typename: 'Campaign', id: string }
+    | { __typename: 'MailingList', id: string }
+    | { __typename: 'AcademicTerm', id: string }
+    | { __typename: 'Course', id: string }
+    | { __typename: 'CourseAcademicTerm', publicSaleState: OrderablePublicSaleState, title: string, shortDescription: string | null, image: string | null, id: string, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null, instructors: Array<{ hidden: boolean, instructor: { givenName: string | null, lastName: string | null, image: string | null } | null }> }
+    | { __typename: 'CampaignEmail', id: string }
+    | { __typename: 'AutomationExecution', id: string }
+    | { __typename: 'OrderLineItem', id: string }
+    | { __typename: 'Promotion', id: string }
+    | { __typename: 'OrderTransaction', id: string }
+    | { __typename: 'Order', id: string }
+    | { __typename: 'StripePaymentMethod', id: string }
+    | { __typename: 'Notification', id: string }
+    | { __typename: 'Cart', id: string }
+    | { __typename: 'Bundle', publicSaleState: OrderablePublicSaleState, title: string, shortDescription: string | null, image: string | null, id: string, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }
+    | { __typename: 'ParasutOrganizationBillingIntegration', id: string }
+    | { __typename: 'PiOrganizationBillingIntegration', id: string }
+    | { __typename: 'ReceiptOrganizationBillingIntegration', id: string }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration', id: string }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration', id: string }
+    | { __typename: 'CourseInstructor', id: string }
+    | { __typename: 'CourseAcademicTermStudent', id: string }
+    | { __typename: 'CoachingSession', id: string }
+    | { __typename: 'OrganizationMemberInvitation', id: string }
+    | { __typename: 'InstructorInvitation', id: string }
+    | { __typename: 'StudentInvitation', id: string }
+    | { __typename: 'CoachingSessionStudentInvitation', id: string }
+    | { __typename: 'WaitlistInvitation', id: string }
+    | { __typename: 'CourseItemProgress', id: string }
+    | { __typename: 'CoachingSessionPlan', publicSaleState: OrderablePublicSaleState, id: string, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }
+    | { __typename: 'DigitalProduct', publicSaleState: OrderablePublicSaleState, title: string, shortDescription: string | null, image: string | null, id: string, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }
+    | { __typename: 'LiveEvent', publicSaleState: OrderablePublicSaleState, title: string, shortDescription: string | null, image: string | null, startDate: string | null, endDate: string | null, hasEnded: boolean, locationType: LiveEventLocationType, venueName: string | null, addressLine: string | null, city: string | null, id: string, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null, course: { currentAcademicTerm: { instructors: Array<{ hidden: boolean, instructor: { givenName: string | null, lastName: string | null, image: string | null } | null }> } | null } | null }
+    | { __typename: 'OrganizationCustomFieldDefinition', id: string }
+    | { __typename: 'Tag', id: string }
+    | { __typename: 'OrgSubscriptionTier', publicSaleState: OrderablePublicSaleState, id: string, sellingPrice: { amount: string, currency: Currency } | null, discountedPrice: { amount: string, currency: Currency } | null }
+    | { __typename: 'OrgSubscriptionTierPricing', id: string }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing', id: string }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance', id: string }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition', id: string }
+    | { __typename: 'CoachingSessionStudent', id: string }
+    | { __typename: 'CoachingSessionStudentPlan', id: string }
+    | { __typename: 'CoachingSessionReservation', id: string }
+    | { __typename: 'CoachingSessionReservationAttendee', id: string }
+    | { __typename: 'CoachAvailabilityRule', id: string }
+    | { __typename: 'CoachAvailabilityOverride', id: string }
+    | { __typename: 'CoachingSessionInstructor', id: string }
+    | { __typename: 'GiftedOrgSubscription', id: string }
+    | { __typename: 'OrganizationRole', id: string }
+    | { __typename: 'OrganizationMemberRoleAssignment', id: string }
+    | { __typename: 'AutomationTrigger', id: string }
+    | { __typename: 'AutomationAction', id: string }
+    | { __typename: 'AutomationCondition', id: string }
+    | { __typename: 'Automation', id: string }
+    | { __typename: 'MultipleChoiceQuiz', id: string }
+    | { __typename: 'FreeResponseQuiz', id: string }
+    | { __typename: 'PhraseSelectionQuiz', id: string }
+    | { __typename: 'CategorizationQuiz', id: string }
+    | { __typename: 'FillInBlankQuiz', id: string }
+    | { __typename: 'OrderingQuiz', id: string }
+    | { __typename: 'MatchingQuiz', id: string }
+    | { __typename: 'ExamQuiz', id: string }
+    | { __typename: 'Exam', id: string }
+    | { __typename: 'ExamStage', id: string }
+    | { __typename: 'ExamStageVariant', id: string }
+    | { __typename: 'Forum', id: string }
+    | { __typename: 'Form', id: string }
+    | { __typename: 'OrgSubscriptionProduct', id: string }
+    | { __typename: 'CoachingSessionPlanPricing', id: string }
+    | { __typename: 'EventCampaign', id: string }
+    | { __typename: 'StudentOrgSubscription', id: string }
+    | { __typename: 'LegalDocument', id: string }
+    | { __typename: 'LegalDocumentAcceptance', id: string }
+    | { __typename: 'PaytrStoredCard', id: string }
+    | { __typename: 'CommunityBan', id: string }
+    | { __typename: 'InstagramAutoDmRule', id: string }
+    | { __typename: 'TagGroup', id: string }
+    | { __typename: 'TagGroupTag', id: string }
+    | { __typename: 'DocumentCourseItem', id: string }
+    | { __typename: 'InVideoQuiz', id: string }
+    | { __typename: 'Video', id: string }
+    | { __typename: 'VideoCourseItem', id: string }
+    | { __typename: 'QuizCourseItem', id: string }
+    | { __typename: 'AssignmentCourseItem', id: string }
+    | { __typename: 'ArticleCourseItem', id: string }
+    | { __typename: 'QuestionCourseItem', id: string }
+    | { __typename: 'EmbedCourseItem', id: string }
+    | { __typename: 'ExamCourseItem', id: string }
+    | { __typename: 'LiveCourseItem', id: string }
+    | { __typename: 'ForumCourseItem', id: string }
+    | { __typename: 'ScormPackage', id: string }
+    | { __typename: 'ScormCourseItem', id: string }
+    | { __typename: 'Cmi5Package', id: string }
+    | { __typename: 'Cmi5CourseItem', id: string }
+    | { __typename: 'Audio', id: string }
+    | { __typename: 'AudioCourseItem', id: string }
+    | { __typename: 'FormCourseItem', id: string }
+    | { __typename: 'CourseSection', id: string }
+    | { __typename: 'CourseAcademicTermPricing', id: string }
+    | { __typename: 'AssignmentSubmission', id: string }
+    | { __typename: 'StudentQuizSubmission', id: string }
+    | { __typename: 'CertificateTemplate', id: string }
+    | { __typename: 'Image', id: string }
+    | { __typename: 'StudentOrgSubscriptionPayment', id: string }
+    | { __typename: 'PaymentFormQuestion', id: string }
+    | { __typename: 'SubscriptionPromotion', id: string }
+    | { __typename: 'LiveCourseItemCalendarEntry', id: string }
+    | { __typename: 'FormQuestionSubmission', id: string }
+    | { __typename: 'FormSession', id: string }
+    | { __typename: 'OrganizationCommunitySettings', id: string }
+    | { __typename: 'CommunitySpaceGroup', id: string }
+    | { __typename: 'SubscriptionPromotionUsage', id: string }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings', id: string }
+    | { __typename: 'OrganizationWhatsappNotificationSettings', id: string }
+    | { __typename: 'StudentOrgSubscriptionInvoice', id: string }
+    | { __typename: 'Gift', id: string }
+    | { __typename: 'GiftLineItem', id: string }
+    | { __typename: 'PiEducationSubscription', id: string }
+    | { __typename: 'ReferralCode', id: string }
+    | { __typename: 'Referral', id: string }
+    | { __typename: 'ReferralPartner', id: string }
+    | { __typename: 'ReferralReward', id: string }
+    | { __typename: 'CommunitySpace', id: string }
+    | { __typename: 'CommunitySpaceMember', id: string }
+    | { __typename: 'CommunityPointsEntry', id: string }
+    | { __typename: 'CommunityBadge', id: string }
+    | { __typename: 'CommunityBadgeHolder', id: string }
+    | { __typename: 'CommunityProfile', id: string }
+    | { __typename: 'CommunityPost', id: string }
+    | { __typename: 'CommunityComment', id: string }
+    | { __typename: 'CommunityMember', id: string }
+    | { __typename: 'CommunityEvent', id: string }
+    | { __typename: 'CommunityEventSeries', id: string }
+    | { __typename: 'CommunityEventWaitlistEntry', id: string }
+    | { __typename: 'CommunityEventRsvp', id: string }
+    | { __typename: 'OrderBillingAddress', id: string }
+    | { __typename: 'OrderRefund', id: string }
+    | { __typename: 'OrganizationPaymentMethod', id: string }
+    | { __typename: 'FormPaymentSession', id: string }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings', id: string }
+    | { __typename: 'AttachmentWatermarkJob', id: string }
+    | { __typename: 'PiEducationSubscriptionPayment', id: string }
+    | { __typename: 'PiEducationPaymentPlan', id: string }
+    | { __typename: 'PriceGroup', id: string }
+    | { __typename: 'OrderableGroupPrice', id: string }
+    | { __typename: 'CommunityPostAttachment', id: string }
+    | { __typename: 'CommunityChatMessageAttachment', id: string }
+    | { __typename: 'CommunityAttachmentReviewItem', id: string }
+    | { __typename: 'CommunityChatMessage', id: string }
+    | { __typename: 'CommunityChatRoom', id: string }
+    | { __typename: 'OrganizationForumSettings', id: string }
+    | { __typename: 'ForumSettings', id: string }
+    | { __typename: 'ForumPost', id: string }
+    | { __typename: 'ForumPostComment', id: string }
+    | { __typename: 'MailingListSubscription', id: string }
+    | { __typename: 'VideoChapters', id: string }
+    | { __typename: 'ExamSession', id: string }
+    | { __typename: 'FormResultPage', id: string }
+    | { __typename: 'FormCalculationResult', id: string }
+    | { __typename: 'TextFormQuestion', id: string }
+    | { __typename: 'ContactFormQuestion', id: string }
+    | { __typename: 'TextareaFormQuestion', id: string }
+    | { __typename: 'RadioFormQuestion', id: string }
+    | { __typename: 'CheckboxFormQuestion', id: string }
+    | { __typename: 'SelectFormQuestion', id: string }
+    | { __typename: 'MatrixFormQuestion', id: string }
+    | { __typename: 'DateFormQuestion', id: string }
+    | { __typename: 'MultiselectFormQuestion', id: string }
+    | { __typename: 'LinearScaleFormQuestion', id: string }
+    | { __typename: 'FileFormQuestion', id: string }
+    | { __typename: 'ContentFormQuestion', id: string }
+    | { __typename: 'TagGroupSelectFormQuestion', id: string }
+    | { __typename: 'TagSelectFormQuestion', id: string }
+    | { __typename: 'CustomFieldFormQuestion', id: string }
+    | { __typename: 'FormSection', id: string }
+    | { __typename: 'FormSessionGrade', id: string }
+    | { __typename: 'ExamQuestionImportJob', id: string }
+    | { __typename: 'CampaignOrderableTarget', id: string }
+    | { __typename: 'ExclusionList', id: string }
+    | { __typename: 'CampaignExcludedOrderableTarget', id: string }
+    | { __typename: 'CampaignExcludedMailingList', id: string }
+    | { __typename: 'CampaignOrgSubscriptionPlan', id: string }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan', id: string }
+    | { __typename: 'CampaignTemplate', id: string }
+    | { __typename: 'EventCampaignEmail', id: string }
+    | { __typename: 'ExclusionListEntry', id: string }
+    | { __typename: 'FormResultsExportJob', id: string }
+    | { __typename: 'OrderLineItemsExportJob', id: string }
+    | { __typename: 'LegalDocumentAcceptanceExportJob', id: string }
+    | { __typename: 'OrganizationStudentsExportJob', id: string }
+    | { __typename: 'CourseContentImportJob', id: string }
+    | { __typename: 'ExclusionListEntriesExportJob', id: string }
+    | { __typename: 'MailingListSubscriptionsExportJob', id: string }
+    | { __typename: 'IysConsentExportJob', id: string }
+    | { __typename: 'GeneratedPageRule', id: string }
+    | { __typename: 'GeneratedPageOverride', id: string }
+    | { __typename: 'OrganizationRedirect', id: string }
+    | { __typename: 'ContentCategory', id: string }
+    | { __typename: 'ContentPage', id: string }
+    | { __typename: 'EmailComponentTemplate', id: string }
+    | { __typename: 'SocialPostSlide', id: string }
+    | { __typename: 'SocialPost', id: string }
+    | { __typename: 'OrganizationSocialPostTheme', id: string }
+    | { __typename: 'FormCalculation', id: string }
+    | { __typename: 'FormScoringMatrixEntry', id: string }
+    | { __typename: 'FormScoringDimension', id: string }
+    | { __typename: 'NumericScaleGradingQuestion', id: string }
+    | { __typename: 'TextFeedbackGradingQuestion', id: string }
+    | { __typename: 'RubricGradingQuestion', id: string }
+    | { __typename: 'PassFailGradingQuestion', id: string }
+    | { __typename: 'DataProvenanceRecord', id: string }
+    | { __typename: 'WebPage', id: string }
+    | { __typename: 'WebsiteSettings', id: string }
+    | { __typename: 'OrgRouteManifestEntry', id: string }
+    | { __typename: 'GeneratedPageBlockOverride', id: string }
+    | { __typename: 'GeneratedPageEntityPin', id: string }
+    | { __typename: 'SocialPostPublication', id: string }
+    | { __typename: 'DemoOrganization', id: string }
+    | { __typename: 'SiteBundle', id: string }
+    | { __typename: 'SiteBundleActivation', id: string }
+    | { __typename: 'OrganizationUISettings', id: string }
+    | { __typename: 'OrderableRecommendation', id: string }
+    | { __typename: 'WebPageComponentTemplate', id: string }
+    | { __typename: 'WebPageTemplate', id: string }
+    | { __typename: 'CustomerPlatformInvoice', id: string }
+    | { __typename: 'PlatformHistoricalInvoice', id: string }
+    | { __typename: 'PlatformFeeAdjustmentDocument', id: string }
+    | { __typename: 'PlatformInvoice', id: string }
+    | { __typename: 'WebsiteTemplate', id: string }
+    | { __typename: 'WebsiteTemplatePage', id: string }
+    | { __typename: 'OrganizationVideoWatermarkSettings', id: string }
+    | { __typename: 'OrganizationMobileApp', id: string }
+    | { __typename: 'CustomFontFace', id: string }
+    | { __typename: 'CustomFont', id: string }
+    | { __typename: 'OrganizationLabelSettings', id: string }
+    | { __typename: 'CourseAcademicTermUISettings', id: string }
+    | { __typename: 'StudentBillingAddress', id: string }
+    | { __typename: 'OrganizationBillingAddress', id: string }
+    | { __typename: 'PushDevice', id: string }
+    | { __typename: 'OrderInvoice', id: string }
+    | { __typename: 'PiEducationSubscriptionInvoice', id: string }
+    | { __typename: 'SupportConversation', id: string }
+    | { __typename: 'SupportMessage', id: string }
+    | { __typename: 'SupportInbox', id: string }
+    | { __typename: 'SupportMessageAttachment', id: string }
+    | { __typename: 'SupportParticipant', id: string }
+    | { __typename: 'SupportCannedReply', id: string }
+    | { __typename: 'SupportBusinessHours', id: string }
+    | { __typename: 'CrmProfile', id: string }
+    | { __typename: 'CrmNote', id: string }
+    | { __typename: 'CrmCall', id: string }
+    | { __typename: 'CrmTask', id: string }
+    | { __typename: 'CrmOutreach', id: string }
+    | { __typename: 'CrmSequenceEnrollment', id: string }
+    | { __typename: 'CrmSavedSegment', id: string }
+    | { __typename: 'PageView', id: string }
+    | { __typename: 'EmailActivity', id: string }
+    | { __typename: 'ForumPostReaction', id: string }
+    | { __typename: 'ForumPostCommentReaction', id: string }
+    | { __typename: 'CommunityContentReport', id: string }
+    | { __typename: 'CommunityModerationLogEntry', id: string }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition', id: string }
+    | { __typename: 'GlobalEmailSuppression', id: string }
+    | { __typename: 'FormNavigationSettings', id: string }
+    | { __typename: 'XapiCredential', id: string }
+    | { __typename: 'XapiStatement', id: string }
+    | { __typename: 'Cmi5Au', id: string }
+    | { __typename: 'StudentCertificate', id: string }
+    | { __typename: 'PayoutDeduction', id: string }
+    | { __typename: 'SubscriptionPaymentRefund', id: string }
+    | { __typename: 'PayoutTransfer', id: string }
+    | { __typename: 'OrgApiKey', id: string }
+    | { __typename: 'ScormSession', id: string }
+    | { __typename: 'StudentReferralProgram', id: string }
+    | { __typename: 'StudentReferral', id: string }
+    | { __typename: 'ForumContentReport', id: string }
+    | { __typename: 'CommunityFeedView', id: string }
+    | { __typename: 'CommunityRailLink', id: string }
+    | { __typename: 'CommunityRailSection', id: string }
+    | { __typename: 'CommunitySpaceTab', id: string }
+    | { __typename: 'CommunityPostTopic', id: string }
+    | { __typename: 'CommunityPeerGroupProgram', id: string }
+    | { __typename: 'CommunityPeerGroup', id: string }
+    | { __typename: 'CommunityJourneyTemplate', id: string }
+    | { __typename: 'CommunityJourneyStage', id: string }
+    | { __typename: 'CommunityJourneyTask', id: string }
+    | { __typename: 'CommunityJourneyMetric', id: string }
+    | { __typename: 'CommunityJourneyMetricEntry', id: string }
+    | { __typename: 'CommunityJourneyNote', id: string }
+    | { __typename: 'CommunityJourneyEnrollment', id: string }
+    | { __typename: 'CommunityJourney', id: string }
+    | { __typename: 'CommunityAiAssistant', id: string }
+    | { __typename: 'CommunityAiConversation', id: string }
+    | { __typename: 'CommunityAiMessage', id: string }
+    | { __typename: 'CommunityExternalTool', id: string }
+    | { __typename: 'OrderableRecommendationExclusion', id: string }
+    | { __typename: 'PipelineShadowJob', id: string }
+    | { __typename: 'CampaignCrmSegment', id: string }
+    | { __typename: 'CampaignExcludedCrmSegment', id: string }
+    | { __typename: 'CommunityCommentAttachment', id: string }
+   | null };
+
+export type SdkOrgSubscriptionProductsQueryVariables = Exact<{
+  organizationSlug: string;
+  first?: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SdkOrgSubscriptionProductsQuery = { organization: { id: string, orgSubscriptionProducts: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, name: string, slug: string, description: string | null, allowMonthly: boolean, allowYearly: boolean, allowLifetime: boolean, tiers: Array<{ id: string, name: string, slug: string, description: string | null, features: unknown, objectIndex: number, trialPeriodDays: number | null, viewerCanOrder: boolean, salesPaused: boolean, pricing: Array<{ id: string, currency: Currency, interval: PaymentInterval, intervalCount: number, originalPrice: string | null, sellingPrice: string, enabled: boolean }>, lifetimePricing: { id: string, currency: Currency, originalPrice: string | null, sellingPrice: string, enabled: boolean } | null }> } }> } } | null };
+
 export type SdkOrganizationIdBySlugQueryVariables = Exact<{
   slug: string;
 }>;
 
 
 export type SdkOrganizationIdBySlugQuery = { organization: { id: string } | null };
+
+export type SdkPublicCommunityEventQueryVariables = Exact<{
+  organizationSlug: string;
+  eventId: string | number;
+}>;
+
+
+export type SdkPublicCommunityEventQuery = { publicCommunityEventTeaser: { id: string, eventId: string, title: string, startAt: string, endAt: string | null, timezone: string, accessType: PublicCommunityEventAccess, isFull: boolean, isCancelled: boolean, goingCount: number | null, spaceName: string, hostName: string | null, hostNames: Array<string>, locationType: CommunityEventLocationType, venueName: string | null, addressLine: string | null, city: string | null, locationText: string | null, description: unknown, image: string | null, descriptionRich: { html: string, text: string } | null, recordingVideo: { watchRevision: string, source: VideoSource, url: string | null, externalUrl: string | null, posterUrl: string | null, duration: number | null, captions: Array<{ language: string, label: string, url: string }> } | null, recordingLanguageVersions: Array<{ language: unknown, kind: VideoLanguageVersionKind, video: { watchRevision: string, source: VideoSource, url: string | null, externalUrl: string | null, posterUrl: string | null, duration: number | null, captions: Array<{ language: string, label: string, url: string }> } }>, series: { id: string, seriesId: string, title: string, hasUpcomingOccurrence: boolean, recurrence: { frequency: RecurrenceFrequency, interval: number, weekdays: Array<RecurrenceWeekday>, monthlyMode: MonthlyRecurrenceMode | null, nthWeekday: RecurrenceWeekday | null, nthOrdinal: number | null, startDate: string, startTime: string, timezone: string, until: string | null, count: number | null } | null } | null, tags: Array<{ id: string, name: string, slug: string, color: string | null }>, unlockingTiers: Array<{ name: string, slug: string }> } | null };
+
+export type SdkPublicCommunityEventSeriesQueryVariables = Exact<{
+  organizationSlug: string;
+  seriesId: string | number;
+}>;
+
+
+export type SdkPublicCommunityEventSeriesQuery = { publicCommunityEventSeriesTeaser: { id: string, seriesId: string, title: string, timezone: string, accessType: PublicCommunityEventAccess, hasEnded: boolean, upcomingOccurrenceCount: number, spaceName: string, hostName: string | null, hostNames: Array<string>, locationType: CommunityEventLocationType, venueName: string | null, addressLine: string | null, city: string | null, locationText: string | null, description: unknown, image: string | null, descriptionRich: { html: string, text: string } | null, recurrence: { frequency: RecurrenceFrequency, interval: number, weekdays: Array<RecurrenceWeekday>, monthlyMode: MonthlyRecurrenceMode | null, nthWeekday: RecurrenceWeekday | null, nthOrdinal: number | null, startDate: string, startTime: string, timezone: string, until: string | null, count: number | null } | null, nextOccurrence: { id: string, eventId: string, startAt: string, endAt: string | null, timezone: string, isFull: boolean, isCancelled: boolean, goingCount: number | null } | null, upcomingOccurrences: Array<{ id: string, eventId: string, title: string, startAt: string, endAt: string | null, timezone: string, isFull: boolean, isCancelled: boolean, goingCount: number | null }>, tags: Array<{ id: string, name: string, slug: string, color: string | null }>, unlockingTiers: Array<{ name: string, slug: string }> } | null };
 
 export type SdkRemoveCartOrderableMutationVariables = Exact<{
   input: RemoveCartOrderableInput;
@@ -1973,77 +3969,803 @@ export type SdkRemoveCartOrderableMutation = { removeCartOrderable: { cart: { id
           | { __typename: 'DigitalProduct', id: string }
           | { __typename: 'LiveEvent', id: string }
           | { __typename: 'OrgSubscriptionTier', id: string }
-         }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+         }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkRemoveCouponCodeMutationVariables = Exact<{
   input: RemoveCouponCodeInput;
 }>;
 
 
-export type SdkRemoveCouponCodeMutation = { removeCouponCode: { cart: { id: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } }, promotions: Array<{ id: string }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkRemoveCouponCodeMutation = { removeCouponCode: { cart: { id: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } }, promotions: Array<{ id: string }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkReportCommunityContentMutationVariables = Exact<{
+  input: ReportCommunityContentInput;
+}>;
+
+
+export type SdkReportCommunityContentMutation = { reportCommunityContent: { communityContentReport: { id: string, status: CommunityReportStatus, reason: CommunityReportReason, createdAt: string } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkRequestPasswordResetMutationVariables = Exact<{
   input: RequestStudentPasswordResetInput;
 }>;
 
 
-export type SdkRequestPasswordResetMutation = { requestStudentPasswordReset: { userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkRequestPasswordResetMutation = { requestStudentPasswordReset: { userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkResetPasswordMutationVariables = Exact<{
   input: ResetStudentPasswordInput;
 }>;
 
 
-export type SdkResetPasswordMutation = { resetStudentPassword: { credentials: { accessToken: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkResetPasswordMutation = { resetStudentPassword: { credentials: { accessToken: string } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkRsvpToCommunityEventMutationVariables = Exact<{
+  input: RsvpToCommunityEventInput;
+}>;
+
+
+export type SdkRsvpToCommunityEventMutation = { rsvpToCommunityEvent: { suggestedAction: CommunityRsvpRecovery, communityEvent: { id: string, isFull: boolean, goingCount: number | null, remainingCapacity: number | null, viewerCanRsvp: boolean } | null, communityEventRsvp: { id: string, status: CommunityRsvpStatus } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkSendLoginOtpMutationVariables = Exact<{
   input: SendLoginOtpInput;
 }>;
 
 
-export type SdkSendLoginOtpMutation = { sendLoginOtp: { loginOtp: { channel: OtpChannel, email: string | null, validUntil: string } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkSendLoginOtpMutation = { sendLoginOtp: { loginOtp: { channel: OtpChannel, email: string | null, validUntil: string } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkSetCommunityCommentReactionMutationVariables = Exact<{
+  input: SetCommunityCommentReactionInput;
+}>;
+
+
+export type SdkSetCommunityCommentReactionMutation = { setCommunityCommentReaction: { communityComment: { id: string, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkSetCommunityPostReactionMutationVariables = Exact<{
+  input: SetCommunityPostReactionInput;
+}>;
+
+
+export type SdkSetCommunityPostReactionMutation = { setCommunityPostReaction: { communityPost: { id: string, reactions: Array<{ kind: CommunityReactionKind, count: number, viewerReacted: boolean }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkStartFormSessionMutationVariables = Exact<{
+  input: StartFormSessionInput;
+}>;
+
+
+export type SdkStartFormSessionMutation = { startFormSession: { anonAccessToken: string | null, formSession: { id: string, status: FormSessionStatus } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkSubmitAssignmentSubmissionMutationVariables = Exact<{
   input: SubmitAssignmentSubmissionInput;
 }>;
 
 
-export type SdkSubmitAssignmentSubmissionMutation = { submitAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkSubmitAssignmentSubmissionMutation = { submitAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkSubmitFormQuestionsMutationVariables = Exact<{
+  input: SubmitFormQuestionsInput;
+}>;
+
+
+export type SdkSubmitFormQuestionsMutation = { submitFormQuestions: { formSession: { id: string, status: FormSessionStatus, finishedAt: string | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkSubmitQuizMutationVariables = Exact<{
   input: SubmitQuizInput;
 }>;
 
 
-export type SdkSubmitQuizMutation = { submitQuiz: { quizSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, gradeFeedback: unknown, selectedChoiceIndex: number | null, freeResponseAnswer: unknown, structuredAnswer: unknown, gradingDetails: unknown, submittedAt: string, selectedOption: { content: unknown, description: unknown, isCorrect: boolean | null } | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkSubmitQuizMutation = { submitQuiz: { quizSubmission: { id: string, status: QuizSubmissionStatus, grade: number | null, gradeFeedback: unknown, selectedChoiceIndex: number | null, freeResponseAnswer: unknown, structuredAnswer: unknown, gradingDetails: unknown, submittedAt: string, selectedOption: { content: unknown, description: unknown, isCorrect: boolean | null } | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkSubscribeMailingListMutationVariables = Exact<{
+  input: SubscribeMailingListInput;
+}>;
+
+
+export type SdkSubscribeMailingListMutation = { subscribeMailingList: { userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkUpcomingCommunityEventSeriesQueryVariables = Exact<{
+  organizationSlug: string;
+  from: string;
+  to: string;
+}>;
+
+
+export type SdkUpcomingCommunityEventSeriesQuery = { publicCommunityEventSeriesTeaserWindow: { truncated: boolean, limit: number, series: Array<{ id: string, seriesId: string, title: string, timezone: string, locationType: CommunityEventLocationType, locationText: string | null, accessType: PublicCommunityEventAccess, hasEnded: boolean, upcomingOccurrenceCount: number, spaceName: string, hostName: string | null, hostNames: Array<string>, description: unknown, image: string | null, descriptionRich: { html: string, text: string } | null, recurrence: { frequency: RecurrenceFrequency, interval: number, weekdays: Array<RecurrenceWeekday>, monthlyMode: MonthlyRecurrenceMode | null, nthWeekday: RecurrenceWeekday | null, nthOrdinal: number | null, startDate: string, startTime: string, timezone: string } | null, nextOccurrence: { id: string, startAt: string, endAt: string | null, timezone: string, isFull: boolean, isCancelled: boolean, goingCount: number | null } | null, unlockingTiers: Array<{ name: string, slug: string }> }> } | null };
+
+export type SdkUpcomingCommunityEventsQueryVariables = Exact<{
+  organizationSlug: string;
+  from: string;
+  to: string;
+}>;
+
+
+export type SdkUpcomingCommunityEventsQuery = { publicCommunityEventTeaserWindow: { truncated: boolean, limit: number, teasers: Array<{ id: string, title: string, startAt: string, endAt: string | null, timezone: string, locationType: CommunityEventLocationType, locationText: string | null, accessType: PublicCommunityEventAccess, isFull: boolean, isCancelled: boolean, goingCount: number | null, spaceName: string, hostName: string | null, hostNames: Array<string>, description: unknown, image: string | null, descriptionRich: { html: string, text: string } | null, unlockingTiers: Array<{ name: string, slug: string }> }> } | null };
 
 export type SdkUpdateAssignmentSubmissionMutationVariables = Exact<{
   input: UpdateAssignmentSubmissionInput;
 }>;
 
 
-export type SdkUpdateAssignmentSubmissionMutation = { updateAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkUpdateAssignmentSubmissionMutation = { updateAssignmentSubmission: { assignmentSubmission: { id: string, status: AssignmentSubmissionStatus, freeResponseAnswer: unknown, grade: number | null, gradeFeedback: unknown, createdAt: string, submittedAt: string | null, gradedAt: string | null, attachments: Array<{ id: string, title: string, fileName: string, fileType: string, fileSize: number }> } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkUpdateCommunityCommentMutationVariables = Exact<{
+  input: UpdateCommunityCommentInput;
+}>;
+
+
+export type SdkUpdateCommunityCommentMutation = { updateCommunityComment: { communityComment: { id: string, content: unknown, editedAt: string | null, viewerCanEdit: boolean, viewerCanDelete: boolean } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkUpdateCommunityPostMutationVariables = Exact<{
+  input: UpdateCommunityPostInput;
+}>;
+
+
+export type SdkUpdateCommunityPostMutation = { updateCommunityPost: { communityPost: { id: string, title: string | null, content: unknown, editedAt: string | null, viewerCanEdit: boolean, viewerCanDelete: boolean } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkUpdateCourseItemProgressMutationVariables = Exact<{
   input: UpdateCourseItemProgressInput;
 }>;
 
 
-export type SdkUpdateCourseItemProgressMutation = { updateCourseItemProgress: { progress: { id: string, courseItemId: string, progress: number, status: ItemProgressStatus, firstProgressAt: string | null, updatedAt: string | null } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkUpdateCourseItemProgressMutation = { updateCourseItemProgress: { progress: { id: string, courseItemId: string, progress: number, status: ItemProgressStatus, firstProgressAt: string | null, updatedAt: string | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkUpdateForumPostCommentReactionMutationVariables = Exact<{
   input: UpdateForumPostCommentReactionInput;
 }>;
 
 
-export type SdkUpdateForumPostCommentReactionMutation = { updateForumPostCommentReaction: { forumPostCommentReaction: { id: string, isPositive: boolean | null, updatedAt: string, postComment: { id: string, positiveReactionCount: number | null, negativeReactionCount: number | null } } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkUpdateForumPostCommentReactionMutation = { updateForumPostCommentReaction: { forumPostCommentReaction: { id: string, isPositive: boolean | null, updatedAt: string, postComment: { id: string, positiveReactionCount: number | null, negativeReactionCount: number | null } } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
 
 export type SdkUpdateForumPostReactionMutationVariables = Exact<{
   input: UpdateForumPostReactionInput;
 }>;
 
 
-export type SdkUpdateForumPostReactionMutation = { updateForumPostReaction: { forumPostReaction: { id: string, isPositive: boolean | null, updatedAt: string, post: { id: string, positiveReactionCount: number | null, negativeReactionCount: number | null } } | null, userErrors: Array<{ code: string, field: Array<string>, message: string }> } };
+export type SdkUpdateForumPostReactionMutation = { updateForumPostReaction: { forumPostReaction: { id: string, isPositive: boolean | null, updatedAt: string, post: { id: string, positiveReactionCount: number | null, negativeReactionCount: number | null } } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkUpdateVideoWatchStateMutationVariables = Exact<{
+  input: UpdateVideoWatchStateInput;
+}>;
+
+
+export type SdkUpdateVideoWatchStateMutation = { updateVideoWatchState: { video: { id: string, viewerWatchState: { progress: number, status: ItemProgressStatus } | null } | null, userErrors: Array<{ code: UserErrorCode, field: Array<string>, message: string }> } };
+
+export type SdkVideoPlaybackQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SdkVideoPlaybackQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm' }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
+    | { __typename: 'Forum' }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem' }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video', id: string, url: string | null, externalUrl: string | null, posterUrl: string | null, source: VideoSource }
+    | { __typename: 'VideoCourseItem' }
+    | { __typename: 'QuizCourseItem' }
+    | { __typename: 'AssignmentCourseItem' }
+    | { __typename: 'ArticleCourseItem' }
+    | { __typename: 'QuestionCourseItem' }
+    | { __typename: 'EmbedCourseItem' }
+    | { __typename: 'ExamCourseItem' }
+    | { __typename: 'LiveCourseItem' }
+    | { __typename: 'ForumCourseItem' }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem' }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem' }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem' }
+    | { __typename: 'FormCourseItem' }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'OrderRefund' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob' }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost' }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationMobileApp' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityModerationLogEntry' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
+   | null };
+
+export type SdkVideoWatchStateQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SdkVideoWatchStateQuery = { node:
+    | { __typename: 'Organization' }
+    | { __typename: 'OrganizationMember' }
+    | { __typename: 'User' }
+    | { __typename: 'OrganizationEmailSettings' }
+    | { __typename: 'OrganizationStudent' }
+    | { __typename: 'SystemEmail' }
+    | { __typename: 'SystemEmailTrackingEvent' }
+    | { __typename: 'EmailUsagePeriod' }
+    | { __typename: 'OrganizationSystemEmailTemplate' }
+    | { __typename: 'StudentDevice' }
+    | { __typename: 'StudentDeviceSession' }
+    | { __typename: 'Attachment' }
+    | { __typename: 'Campaign' }
+    | { __typename: 'MailingList' }
+    | { __typename: 'AcademicTerm' }
+    | { __typename: 'Course' }
+    | { __typename: 'CourseAcademicTerm' }
+    | { __typename: 'CampaignEmail' }
+    | { __typename: 'AutomationExecution' }
+    | { __typename: 'OrderLineItem' }
+    | { __typename: 'Promotion' }
+    | { __typename: 'OrderTransaction' }
+    | { __typename: 'Order' }
+    | { __typename: 'StripePaymentMethod' }
+    | { __typename: 'Notification' }
+    | { __typename: 'Cart' }
+    | { __typename: 'Bundle' }
+    | { __typename: 'ParasutOrganizationBillingIntegration' }
+    | { __typename: 'PiOrganizationBillingIntegration' }
+    | { __typename: 'ReceiptOrganizationBillingIntegration' }
+    | { __typename: 'NlInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'TaxInvoiceOrganizationBillingIntegration' }
+    | { __typename: 'CourseInstructor' }
+    | { __typename: 'CourseAcademicTermStudent' }
+    | { __typename: 'CoachingSession' }
+    | { __typename: 'OrganizationMemberInvitation' }
+    | { __typename: 'InstructorInvitation' }
+    | { __typename: 'StudentInvitation' }
+    | { __typename: 'CoachingSessionStudentInvitation' }
+    | { __typename: 'WaitlistInvitation' }
+    | { __typename: 'CourseItemProgress' }
+    | { __typename: 'CoachingSessionPlan' }
+    | { __typename: 'DigitalProduct' }
+    | { __typename: 'LiveEvent' }
+    | { __typename: 'OrganizationCustomFieldDefinition' }
+    | { __typename: 'Tag' }
+    | { __typename: 'OrgSubscriptionTier' }
+    | { __typename: 'OrgSubscriptionTierPricing' }
+    | { __typename: 'OrgSubscriptionTierLifetimePricing' }
+    | { __typename: 'OrgSubscriptionTierCoachingSessionAllowance' }
+    | { __typename: 'OrganizationStudentCustomFieldDefinition' }
+    | { __typename: 'CoachingSessionStudent' }
+    | { __typename: 'CoachingSessionStudentPlan' }
+    | { __typename: 'CoachingSessionReservation' }
+    | { __typename: 'CoachingSessionReservationAttendee' }
+    | { __typename: 'CoachAvailabilityRule' }
+    | { __typename: 'CoachAvailabilityOverride' }
+    | { __typename: 'CoachingSessionInstructor' }
+    | { __typename: 'GiftedOrgSubscription' }
+    | { __typename: 'OrganizationRole' }
+    | { __typename: 'OrganizationMemberRoleAssignment' }
+    | { __typename: 'AutomationTrigger' }
+    | { __typename: 'AutomationAction' }
+    | { __typename: 'AutomationCondition' }
+    | { __typename: 'Automation' }
+    | { __typename: 'MultipleChoiceQuiz' }
+    | { __typename: 'FreeResponseQuiz' }
+    | { __typename: 'PhraseSelectionQuiz' }
+    | { __typename: 'CategorizationQuiz' }
+    | { __typename: 'FillInBlankQuiz' }
+    | { __typename: 'OrderingQuiz' }
+    | { __typename: 'MatchingQuiz' }
+    | { __typename: 'ExamQuiz' }
+    | { __typename: 'Exam' }
+    | { __typename: 'ExamStage' }
+    | { __typename: 'ExamStageVariant' }
+    | { __typename: 'Forum' }
+    | { __typename: 'Form' }
+    | { __typename: 'OrgSubscriptionProduct' }
+    | { __typename: 'CoachingSessionPlanPricing' }
+    | { __typename: 'EventCampaign' }
+    | { __typename: 'StudentOrgSubscription' }
+    | { __typename: 'LegalDocument' }
+    | { __typename: 'LegalDocumentAcceptance' }
+    | { __typename: 'PaytrStoredCard' }
+    | { __typename: 'CommunityBan' }
+    | { __typename: 'InstagramAutoDmRule' }
+    | { __typename: 'TagGroup' }
+    | { __typename: 'TagGroupTag' }
+    | { __typename: 'DocumentCourseItem' }
+    | { __typename: 'InVideoQuiz' }
+    | { __typename: 'Video', id: string, viewerWatchState: { progress: number, status: ItemProgressStatus } | null }
+    | { __typename: 'VideoCourseItem' }
+    | { __typename: 'QuizCourseItem' }
+    | { __typename: 'AssignmentCourseItem' }
+    | { __typename: 'ArticleCourseItem' }
+    | { __typename: 'QuestionCourseItem' }
+    | { __typename: 'EmbedCourseItem' }
+    | { __typename: 'ExamCourseItem' }
+    | { __typename: 'LiveCourseItem' }
+    | { __typename: 'ForumCourseItem' }
+    | { __typename: 'ScormPackage' }
+    | { __typename: 'ScormCourseItem' }
+    | { __typename: 'Cmi5Package' }
+    | { __typename: 'Cmi5CourseItem' }
+    | { __typename: 'Audio' }
+    | { __typename: 'AudioCourseItem' }
+    | { __typename: 'FormCourseItem' }
+    | { __typename: 'CourseSection' }
+    | { __typename: 'CourseAcademicTermPricing' }
+    | { __typename: 'AssignmentSubmission' }
+    | { __typename: 'StudentQuizSubmission' }
+    | { __typename: 'CertificateTemplate' }
+    | { __typename: 'Image' }
+    | { __typename: 'StudentOrgSubscriptionPayment' }
+    | { __typename: 'PaymentFormQuestion' }
+    | { __typename: 'SubscriptionPromotion' }
+    | { __typename: 'LiveCourseItemCalendarEntry' }
+    | { __typename: 'FormQuestionSubmission' }
+    | { __typename: 'FormSession' }
+    | { __typename: 'OrganizationCommunitySettings' }
+    | { __typename: 'CommunitySpaceGroup' }
+    | { __typename: 'SubscriptionPromotionUsage' }
+    | { __typename: 'OrganizationWhatsappNotificationEventSettings' }
+    | { __typename: 'OrganizationWhatsappNotificationSettings' }
+    | { __typename: 'StudentOrgSubscriptionInvoice' }
+    | { __typename: 'Gift' }
+    | { __typename: 'GiftLineItem' }
+    | { __typename: 'PiEducationSubscription' }
+    | { __typename: 'ReferralCode' }
+    | { __typename: 'Referral' }
+    | { __typename: 'ReferralPartner' }
+    | { __typename: 'ReferralReward' }
+    | { __typename: 'CommunitySpace' }
+    | { __typename: 'CommunitySpaceMember' }
+    | { __typename: 'CommunityPointsEntry' }
+    | { __typename: 'CommunityBadge' }
+    | { __typename: 'CommunityBadgeHolder' }
+    | { __typename: 'CommunityProfile' }
+    | { __typename: 'CommunityPost' }
+    | { __typename: 'CommunityComment' }
+    | { __typename: 'CommunityMember' }
+    | { __typename: 'CommunityEvent' }
+    | { __typename: 'CommunityEventSeries' }
+    | { __typename: 'CommunityEventWaitlistEntry' }
+    | { __typename: 'CommunityEventRsvp' }
+    | { __typename: 'OrderBillingAddress' }
+    | { __typename: 'OrderRefund' }
+    | { __typename: 'OrganizationPaymentMethod' }
+    | { __typename: 'FormPaymentSession' }
+    | { __typename: 'OrganizationAttachmentWatermarkSettings' }
+    | { __typename: 'AttachmentWatermarkJob' }
+    | { __typename: 'PiEducationSubscriptionPayment' }
+    | { __typename: 'PiEducationPaymentPlan' }
+    | { __typename: 'PriceGroup' }
+    | { __typename: 'OrderableGroupPrice' }
+    | { __typename: 'CommunityPostAttachment' }
+    | { __typename: 'CommunityChatMessageAttachment' }
+    | { __typename: 'CommunityAttachmentReviewItem' }
+    | { __typename: 'CommunityChatMessage' }
+    | { __typename: 'CommunityChatRoom' }
+    | { __typename: 'OrganizationForumSettings' }
+    | { __typename: 'ForumSettings' }
+    | { __typename: 'ForumPost' }
+    | { __typename: 'ForumPostComment' }
+    | { __typename: 'MailingListSubscription' }
+    | { __typename: 'VideoChapters' }
+    | { __typename: 'ExamSession' }
+    | { __typename: 'FormResultPage' }
+    | { __typename: 'FormCalculationResult' }
+    | { __typename: 'TextFormQuestion' }
+    | { __typename: 'ContactFormQuestion' }
+    | { __typename: 'TextareaFormQuestion' }
+    | { __typename: 'RadioFormQuestion' }
+    | { __typename: 'CheckboxFormQuestion' }
+    | { __typename: 'SelectFormQuestion' }
+    | { __typename: 'MatrixFormQuestion' }
+    | { __typename: 'DateFormQuestion' }
+    | { __typename: 'MultiselectFormQuestion' }
+    | { __typename: 'LinearScaleFormQuestion' }
+    | { __typename: 'FileFormQuestion' }
+    | { __typename: 'ContentFormQuestion' }
+    | { __typename: 'TagGroupSelectFormQuestion' }
+    | { __typename: 'TagSelectFormQuestion' }
+    | { __typename: 'CustomFieldFormQuestion' }
+    | { __typename: 'FormSection' }
+    | { __typename: 'FormSessionGrade' }
+    | { __typename: 'ExamQuestionImportJob' }
+    | { __typename: 'CampaignOrderableTarget' }
+    | { __typename: 'ExclusionList' }
+    | { __typename: 'CampaignExcludedOrderableTarget' }
+    | { __typename: 'CampaignExcludedMailingList' }
+    | { __typename: 'CampaignOrgSubscriptionPlan' }
+    | { __typename: 'CampaignExcludedOrgSubscriptionPlan' }
+    | { __typename: 'CampaignTemplate' }
+    | { __typename: 'EventCampaignEmail' }
+    | { __typename: 'ExclusionListEntry' }
+    | { __typename: 'FormResultsExportJob' }
+    | { __typename: 'OrderLineItemsExportJob' }
+    | { __typename: 'LegalDocumentAcceptanceExportJob' }
+    | { __typename: 'OrganizationStudentsExportJob' }
+    | { __typename: 'CourseContentImportJob' }
+    | { __typename: 'ExclusionListEntriesExportJob' }
+    | { __typename: 'MailingListSubscriptionsExportJob' }
+    | { __typename: 'IysConsentExportJob' }
+    | { __typename: 'GeneratedPageRule' }
+    | { __typename: 'GeneratedPageOverride' }
+    | { __typename: 'OrganizationRedirect' }
+    | { __typename: 'ContentCategory' }
+    | { __typename: 'ContentPage' }
+    | { __typename: 'EmailComponentTemplate' }
+    | { __typename: 'SocialPostSlide' }
+    | { __typename: 'SocialPost' }
+    | { __typename: 'OrganizationSocialPostTheme' }
+    | { __typename: 'FormCalculation' }
+    | { __typename: 'FormScoringMatrixEntry' }
+    | { __typename: 'FormScoringDimension' }
+    | { __typename: 'NumericScaleGradingQuestion' }
+    | { __typename: 'TextFeedbackGradingQuestion' }
+    | { __typename: 'RubricGradingQuestion' }
+    | { __typename: 'PassFailGradingQuestion' }
+    | { __typename: 'DataProvenanceRecord' }
+    | { __typename: 'WebPage' }
+    | { __typename: 'WebsiteSettings' }
+    | { __typename: 'OrgRouteManifestEntry' }
+    | { __typename: 'GeneratedPageBlockOverride' }
+    | { __typename: 'GeneratedPageEntityPin' }
+    | { __typename: 'SocialPostPublication' }
+    | { __typename: 'DemoOrganization' }
+    | { __typename: 'SiteBundle' }
+    | { __typename: 'SiteBundleActivation' }
+    | { __typename: 'OrganizationUISettings' }
+    | { __typename: 'OrderableRecommendation' }
+    | { __typename: 'WebPageComponentTemplate' }
+    | { __typename: 'WebPageTemplate' }
+    | { __typename: 'CustomerPlatformInvoice' }
+    | { __typename: 'PlatformHistoricalInvoice' }
+    | { __typename: 'PlatformFeeAdjustmentDocument' }
+    | { __typename: 'PlatformInvoice' }
+    | { __typename: 'WebsiteTemplate' }
+    | { __typename: 'WebsiteTemplatePage' }
+    | { __typename: 'OrganizationVideoWatermarkSettings' }
+    | { __typename: 'OrganizationMobileApp' }
+    | { __typename: 'CustomFontFace' }
+    | { __typename: 'CustomFont' }
+    | { __typename: 'OrganizationLabelSettings' }
+    | { __typename: 'CourseAcademicTermUISettings' }
+    | { __typename: 'StudentBillingAddress' }
+    | { __typename: 'OrganizationBillingAddress' }
+    | { __typename: 'PushDevice' }
+    | { __typename: 'OrderInvoice' }
+    | { __typename: 'PiEducationSubscriptionInvoice' }
+    | { __typename: 'SupportConversation' }
+    | { __typename: 'SupportMessage' }
+    | { __typename: 'SupportInbox' }
+    | { __typename: 'SupportMessageAttachment' }
+    | { __typename: 'SupportParticipant' }
+    | { __typename: 'SupportCannedReply' }
+    | { __typename: 'SupportBusinessHours' }
+    | { __typename: 'CrmProfile' }
+    | { __typename: 'CrmNote' }
+    | { __typename: 'CrmCall' }
+    | { __typename: 'CrmTask' }
+    | { __typename: 'CrmOutreach' }
+    | { __typename: 'CrmSequenceEnrollment' }
+    | { __typename: 'CrmSavedSegment' }
+    | { __typename: 'PageView' }
+    | { __typename: 'EmailActivity' }
+    | { __typename: 'ForumPostReaction' }
+    | { __typename: 'ForumPostCommentReaction' }
+    | { __typename: 'CommunityContentReport' }
+    | { __typename: 'CommunityModerationLogEntry' }
+    | { __typename: 'OrganizationMemberCustomFieldDefinition' }
+    | { __typename: 'GlobalEmailSuppression' }
+    | { __typename: 'FormNavigationSettings' }
+    | { __typename: 'XapiCredential' }
+    | { __typename: 'XapiStatement' }
+    | { __typename: 'Cmi5Au' }
+    | { __typename: 'StudentCertificate' }
+    | { __typename: 'PayoutDeduction' }
+    | { __typename: 'SubscriptionPaymentRefund' }
+    | { __typename: 'PayoutTransfer' }
+    | { __typename: 'OrgApiKey' }
+    | { __typename: 'ScormSession' }
+    | { __typename: 'StudentReferralProgram' }
+    | { __typename: 'StudentReferral' }
+    | { __typename: 'ForumContentReport' }
+    | { __typename: 'CommunityFeedView' }
+    | { __typename: 'CommunityRailLink' }
+    | { __typename: 'CommunityRailSection' }
+    | { __typename: 'CommunitySpaceTab' }
+    | { __typename: 'CommunityPostTopic' }
+    | { __typename: 'CommunityPeerGroupProgram' }
+    | { __typename: 'CommunityPeerGroup' }
+    | { __typename: 'CommunityJourneyTemplate' }
+    | { __typename: 'CommunityJourneyStage' }
+    | { __typename: 'CommunityJourneyTask' }
+    | { __typename: 'CommunityJourneyMetric' }
+    | { __typename: 'CommunityJourneyMetricEntry' }
+    | { __typename: 'CommunityJourneyNote' }
+    | { __typename: 'CommunityJourneyEnrollment' }
+    | { __typename: 'CommunityJourney' }
+    | { __typename: 'CommunityAiAssistant' }
+    | { __typename: 'CommunityAiConversation' }
+    | { __typename: 'CommunityAiMessage' }
+    | { __typename: 'CommunityExternalTool' }
+    | { __typename: 'OrderableRecommendationExclusion' }
+    | { __typename: 'PipelineShadowJob' }
+    | { __typename: 'CampaignCrmSegment' }
+    | { __typename: 'CampaignExcludedCrmSegment' }
+    | { __typename: 'CommunityCommentAttachment' }
+   | null };
 
 export type SdkViewerCertificatesQueryVariables = Exact<{
   first?: number;
@@ -2072,6 +4794,13 @@ export type SdkViewerOrdersQuery = { viewer:
     | { __typename: 'User' }
     | { __typename: 'OrganizationStudent', id: string, orders: { totalCount: number, pageInfo: { hasNextPage: boolean, endCursor: string | null }, edges: Array<{ cursor: string, node: { id: string, slug: string, status: OrderStatus, createdAt: string, discountedPrice: { presentmentMoney: { amount: string, currency: Currency } } } }> } }
    | null };
+
+export type SdkViewerOrgSubscriptionsQueryVariables = Exact<{
+  organizationSlug: string;
+}>;
+
+
+export type SdkViewerOrgSubscriptionsQuery = { organization: { id: string, viewerStudentOrgSubscriptions: Array<{ id: string, status: StudentOrgSubscriptionStatus, grantsAccess: boolean, currentPeriodEnd: string | null, cancelAtPeriodEnd: boolean, isLifetime: boolean, canConvertToPaid: boolean, renewalCardNotice: { endsAt: string, showFrom: string, dismissible: boolean } | null, tier: { id: string, name: string, slug: string } }> } | null };
 
 export type SdkViewerSessionQueryVariables = Exact<{ [key: string]: never; }>;
 

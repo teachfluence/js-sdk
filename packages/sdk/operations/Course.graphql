@@ -9,6 +9,7 @@ query SdkCourse($organizationSlug: String!, $slug: String!) {
       title
       slug
       viewerCanOrder
+      viewerBlockedByPurchaseGate
       viewerCanOrderAsGift
       salesPaused
       remainingCapacity

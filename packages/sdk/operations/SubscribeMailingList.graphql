@@ -1,0 +1,9 @@
+mutation SdkSubscribeMailingList($input: SubscribeMailingListInput!) {
+  subscribeMailingList(input: $input) {
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

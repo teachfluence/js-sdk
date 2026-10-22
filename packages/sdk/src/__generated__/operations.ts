@@ -30,12 +30,42 @@ import type {
   SdkCatalogQueryVariables,
   SdkCoachingSessionQuery,
   SdkCoachingSessionQueryVariables,
+  SdkCommunityCommentRepliesQuery,
+  SdkCommunityCommentRepliesQueryVariables,
+  SdkCommunityEventsQuery,
+  SdkCommunityEventsQueryVariables,
+  SdkCommunityFeedQuery,
+  SdkCommunityFeedQueryVariables,
+  SdkCommunityMemberDirectoryQuery,
+  SdkCommunityMemberDirectoryQueryVariables,
+  SdkCommunityPostCommentsQuery,
+  SdkCommunityPostCommentsQueryVariables,
+  SdkCommunityPostQuery,
+  SdkCommunityPostQueryVariables,
+  SdkCommunityReactorsQuery,
+  SdkCommunityReactorsQueryVariables,
+  SdkCommunitySpaceGroupsQuery,
+  SdkCommunitySpaceGroupsQueryVariables,
+  SdkCommunitySpacePostsQuery,
+  SdkCommunitySpacePostsQueryVariables,
+  SdkCommunitySpacesQuery,
+  SdkCommunitySpacesQueryVariables,
   SdkCompleteFreeOrderMutation,
   SdkCompleteFreeOrderMutationVariables,
+  SdkContentBlogQuery,
+  SdkContentBlogQueryVariables,
+  SdkCourseCustomFieldsQuery,
+  SdkCourseCustomFieldsQueryVariables,
   SdkCourseItemDetailQuery,
   SdkCourseItemDetailQueryVariables,
   SdkCourseQuery,
   SdkCourseQueryVariables,
+  SdkCreateCommunityAttachmentUploadMutation,
+  SdkCreateCommunityAttachmentUploadMutationVariables,
+  SdkCreateCommunityCommentMutation,
+  SdkCreateCommunityCommentMutationVariables,
+  SdkCreateCommunityPostMutation,
+  SdkCreateCommunityPostMutationVariables,
   SdkCreateDraftAssignmentSubmissionMutation,
   SdkCreateDraftAssignmentSubmissionMutationVariables,
   SdkCreateForumPostCommentMutation,
@@ -46,14 +76,24 @@ import type {
   SdkCreateOrderMutationVariables,
   SdkCurriculumQuery,
   SdkCurriculumQueryVariables,
+  SdkDeleteCommunityCommentMutation,
+  SdkDeleteCommunityCommentMutationVariables,
+  SdkDeleteCommunityPostMutation,
+  SdkDeleteCommunityPostMutationVariables,
   SdkDigitalProductQuery,
   SdkDigitalProductQueryVariables,
+  SdkFormQuery,
+  SdkFormQueryVariables,
   SdkForumPostQuery,
   SdkForumPostQueryVariables,
   SdkForumQuery,
   SdkForumQueryVariables,
   SdkGetAttachmentUrlMutation,
   SdkGetAttachmentUrlMutationVariables,
+  SdkJoinCommunitySpaceMutation,
+  SdkJoinCommunitySpaceMutationVariables,
+  SdkLeaveCommunitySpaceMutation,
+  SdkLeaveCommunitySpaceMutationVariables,
   SdkLiveEventQuery,
   SdkLiveEventQueryVariables,
   SdkLoginWithOtpMutation,
@@ -64,38 +104,78 @@ import type {
   SdkLogoutMutationVariables,
   SdkMarkCartItemAsGiftMutation,
   SdkMarkCartItemAsGiftMutationVariables,
+  SdkMarkCommunitySpaceReadMutation,
+  SdkMarkCommunitySpaceReadMutationVariables,
   SdkOrderQuery,
   SdkOrderQueryVariables,
+  SdkOrderableJsonLdFactsQuery,
+  SdkOrderableJsonLdFactsQueryVariables,
+  SdkOrgSubscriptionProductsQuery,
+  SdkOrgSubscriptionProductsQueryVariables,
   SdkOrganizationIdBySlugQuery,
   SdkOrganizationIdBySlugQueryVariables,
+  SdkPublicCommunityEventQuery,
+  SdkPublicCommunityEventQueryVariables,
+  SdkPublicCommunityEventSeriesQuery,
+  SdkPublicCommunityEventSeriesQueryVariables,
   SdkRemoveCartOrderableMutation,
   SdkRemoveCartOrderableMutationVariables,
   SdkRemoveCouponCodeMutation,
   SdkRemoveCouponCodeMutationVariables,
+  SdkReportCommunityContentMutation,
+  SdkReportCommunityContentMutationVariables,
   SdkRequestPasswordResetMutation,
   SdkRequestPasswordResetMutationVariables,
   SdkResetPasswordMutation,
   SdkResetPasswordMutationVariables,
+  SdkRsvpToCommunityEventMutation,
+  SdkRsvpToCommunityEventMutationVariables,
   SdkSendLoginOtpMutation,
   SdkSendLoginOtpMutationVariables,
+  SdkSetCommunityCommentReactionMutation,
+  SdkSetCommunityCommentReactionMutationVariables,
+  SdkSetCommunityPostReactionMutation,
+  SdkSetCommunityPostReactionMutationVariables,
+  SdkStartFormSessionMutation,
+  SdkStartFormSessionMutationVariables,
   SdkSubmitAssignmentSubmissionMutation,
   SdkSubmitAssignmentSubmissionMutationVariables,
+  SdkSubmitFormQuestionsMutation,
+  SdkSubmitFormQuestionsMutationVariables,
   SdkSubmitQuizMutation,
   SdkSubmitQuizMutationVariables,
+  SdkSubscribeMailingListMutation,
+  SdkSubscribeMailingListMutationVariables,
+  SdkUpcomingCommunityEventSeriesQuery,
+  SdkUpcomingCommunityEventSeriesQueryVariables,
+  SdkUpcomingCommunityEventsQuery,
+  SdkUpcomingCommunityEventsQueryVariables,
   SdkUpdateAssignmentSubmissionMutation,
   SdkUpdateAssignmentSubmissionMutationVariables,
+  SdkUpdateCommunityCommentMutation,
+  SdkUpdateCommunityCommentMutationVariables,
+  SdkUpdateCommunityPostMutation,
+  SdkUpdateCommunityPostMutationVariables,
   SdkUpdateCourseItemProgressMutation,
   SdkUpdateCourseItemProgressMutationVariables,
   SdkUpdateForumPostCommentReactionMutation,
   SdkUpdateForumPostCommentReactionMutationVariables,
   SdkUpdateForumPostReactionMutation,
   SdkUpdateForumPostReactionMutationVariables,
+  SdkUpdateVideoWatchStateMutation,
+  SdkUpdateVideoWatchStateMutationVariables,
+  SdkVideoPlaybackQuery,
+  SdkVideoPlaybackQueryVariables,
+  SdkVideoWatchStateQuery,
+  SdkVideoWatchStateQueryVariables,
   SdkViewerCertificatesQuery,
   SdkViewerCertificatesQueryVariables,
   SdkViewerEnrollmentsQuery,
   SdkViewerEnrollmentsQueryVariables,
   SdkViewerOrdersQuery,
   SdkViewerOrdersQueryVariables,
+  SdkViewerOrgSubscriptionsQuery,
+  SdkViewerOrgSubscriptionsQueryVariables,
   SdkViewerSessionQuery,
   SdkViewerSessionQueryVariables,
 } from './types.js';
@@ -141,7 +221,7 @@ export const SdkCatalog: PersistedOperation<
   SdkCatalogQuery,
   SdkCatalogQueryVariables
 > = {
-  id: '338b108afc92c7a1a26832fe2edd3e966e40a5973c5e44391e0db8f23d1325c0',
+  id: '8dc4a85c36bae126a74cf97f7c2afc408bfdd7f77cc3cf39158afbb46ae4d143',
   operationName: 'SdkCatalog',
 };
 
@@ -154,6 +234,96 @@ export const SdkCoachingSession: PersistedOperation<
   operationName: 'SdkCoachingSession',
 };
 
+/** `SdkCommunityCommentReplies` */
+export const SdkCommunityCommentReplies: PersistedOperation<
+  SdkCommunityCommentRepliesQuery,
+  SdkCommunityCommentRepliesQueryVariables
+> = {
+  id: '5791d4fea159852270400695fa9e7c65bc0c55c3dae23e944152355b47add5d9',
+  operationName: 'SdkCommunityCommentReplies',
+};
+
+/** `SdkCommunityEvents` */
+export const SdkCommunityEvents: PersistedOperation<
+  SdkCommunityEventsQuery,
+  SdkCommunityEventsQueryVariables
+> = {
+  id: '6cb2f8fe87d752339e2248a8aed570fb0831dc791be1b3ca53fbc289346c7d27',
+  operationName: 'SdkCommunityEvents',
+};
+
+/** `SdkCommunityFeed` */
+export const SdkCommunityFeed: PersistedOperation<
+  SdkCommunityFeedQuery,
+  SdkCommunityFeedQueryVariables
+> = {
+  id: '42510198f29e13c3d9d3f4a3f211e8638286d105f4fe82956d67f92a89754a2b',
+  operationName: 'SdkCommunityFeed',
+};
+
+/** `SdkCommunityMemberDirectory` */
+export const SdkCommunityMemberDirectory: PersistedOperation<
+  SdkCommunityMemberDirectoryQuery,
+  SdkCommunityMemberDirectoryQueryVariables
+> = {
+  id: '6b50d5a278aaf10414a02184f549821bbde0bf927173aa890f1dd501f4b848cf',
+  operationName: 'SdkCommunityMemberDirectory',
+};
+
+/** `SdkCommunityPost` */
+export const SdkCommunityPost: PersistedOperation<
+  SdkCommunityPostQuery,
+  SdkCommunityPostQueryVariables
+> = {
+  id: '936033879aed51f57ba34c89fee7dea73c9e194f287ff6e6d49189ab248feb17',
+  operationName: 'SdkCommunityPost',
+};
+
+/** `SdkCommunityPostComments` */
+export const SdkCommunityPostComments: PersistedOperation<
+  SdkCommunityPostCommentsQuery,
+  SdkCommunityPostCommentsQueryVariables
+> = {
+  id: '0c38d68824d043b9e0e61135301fd3590821d6c38d87a22cc59713efe857d114',
+  operationName: 'SdkCommunityPostComments',
+};
+
+/** `SdkCommunityReactors` */
+export const SdkCommunityReactors: PersistedOperation<
+  SdkCommunityReactorsQuery,
+  SdkCommunityReactorsQueryVariables
+> = {
+  id: 'a9fcabc5938435f288666fb75975cfe39e41899e15ba4038b592b2b85fef0fed',
+  operationName: 'SdkCommunityReactors',
+};
+
+/** `SdkCommunitySpaceGroups` */
+export const SdkCommunitySpaceGroups: PersistedOperation<
+  SdkCommunitySpaceGroupsQuery,
+  SdkCommunitySpaceGroupsQueryVariables
+> = {
+  id: 'fcacfa75d00071085e439fa0f7880861dcbd5d306e180349fede2a1e796fdb98',
+  operationName: 'SdkCommunitySpaceGroups',
+};
+
+/** `SdkCommunitySpacePosts` */
+export const SdkCommunitySpacePosts: PersistedOperation<
+  SdkCommunitySpacePostsQuery,
+  SdkCommunitySpacePostsQueryVariables
+> = {
+  id: '0a2d4cfbbce3e843aa4df6f5285b14f5ee9ffe8edcd58d5a077d513969c532bb',
+  operationName: 'SdkCommunitySpacePosts',
+};
+
+/** `SdkCommunitySpaces` */
+export const SdkCommunitySpaces: PersistedOperation<
+  SdkCommunitySpacesQuery,
+  SdkCommunitySpacesQueryVariables
+> = {
+  id: 'e4cbdeaddb433f18cc10fa2e5004951afd8e36bed6df8505b427b8b89b8e84fa',
+  operationName: 'SdkCommunitySpaces',
+};
+
 /** `SdkCompleteFreeOrder` */
 export const SdkCompleteFreeOrder: PersistedOperation<
   SdkCompleteFreeOrderMutation,
@@ -163,13 +333,31 @@ export const SdkCompleteFreeOrder: PersistedOperation<
   operationName: 'SdkCompleteFreeOrder',
 };
 
+/** `SdkContentBlog` */
+export const SdkContentBlog: PersistedOperation<
+  SdkContentBlogQuery,
+  SdkContentBlogQueryVariables
+> = {
+  id: 'e76ea335ecab641a2a0f1f989be0175fb1cf4631922d0bab94220d2a2f605c70',
+  operationName: 'SdkContentBlog',
+};
+
 /** `SdkCourse` */
 export const SdkCourse: PersistedOperation<
   SdkCourseQuery,
   SdkCourseQueryVariables
 > = {
-  id: 'a49599fa63ab66ceae825ba4ee16e5533801cd7ad01cc429199fcda190c04e6e',
+  id: 'a6dca490c47f5390352de3f66979735c75d4b0f93978636dbd2bfc210512e024',
   operationName: 'SdkCourse',
+};
+
+/** `SdkCourseCustomFields` */
+export const SdkCourseCustomFields: PersistedOperation<
+  SdkCourseCustomFieldsQuery,
+  SdkCourseCustomFieldsQueryVariables
+> = {
+  id: 'bf3a058f6c9a00cb1a71822188637b960006893b2350b433fe317886df89910f',
+  operationName: 'SdkCourseCustomFields',
 };
 
 /** `SdkCourseItemDetail` */
@@ -177,8 +365,35 @@ export const SdkCourseItemDetail: PersistedOperation<
   SdkCourseItemDetailQuery,
   SdkCourseItemDetailQueryVariables
 > = {
-  id: '891400cfe0141513870c835c5edd60869d230c361689043dfe2688f0f1f2dc6e',
+  id: '4e54da837c656d8bb1f8f2dfdacb833f043f1c648f24a170c5f13dad5d3c8bac',
   operationName: 'SdkCourseItemDetail',
+};
+
+/** `SdkCreateCommunityAttachmentUpload` */
+export const SdkCreateCommunityAttachmentUpload: PersistedOperation<
+  SdkCreateCommunityAttachmentUploadMutation,
+  SdkCreateCommunityAttachmentUploadMutationVariables
+> = {
+  id: '5b071b567ceea72bf4fecba03c9279fafe17b84a19896d24286d5ba599f70b85',
+  operationName: 'SdkCreateCommunityAttachmentUpload',
+};
+
+/** `SdkCreateCommunityComment` */
+export const SdkCreateCommunityComment: PersistedOperation<
+  SdkCreateCommunityCommentMutation,
+  SdkCreateCommunityCommentMutationVariables
+> = {
+  id: '3b3423dde7d7f83c1122f6e5f01cc4d002951725cac99a06eba369f3ff1687ec',
+  operationName: 'SdkCreateCommunityComment',
+};
+
+/** `SdkCreateCommunityPost` */
+export const SdkCreateCommunityPost: PersistedOperation<
+  SdkCreateCommunityPostMutation,
+  SdkCreateCommunityPostMutationVariables
+> = {
+  id: 'ce36bb10fe09265969419264626aa63d25d6d73f66aeffbd0683a3eb5d6b29e0',
+  operationName: 'SdkCreateCommunityPost',
 };
 
 /** `SdkCreateDraftAssignmentSubmission` */
@@ -226,13 +441,40 @@ export const SdkCurriculum: PersistedOperation<
   operationName: 'SdkCurriculum',
 };
 
+/** `SdkDeleteCommunityComment` */
+export const SdkDeleteCommunityComment: PersistedOperation<
+  SdkDeleteCommunityCommentMutation,
+  SdkDeleteCommunityCommentMutationVariables
+> = {
+  id: '3764785324a4e5a10e851e4814c279ddb9a19579326a203e57888349f44f995e',
+  operationName: 'SdkDeleteCommunityComment',
+};
+
+/** `SdkDeleteCommunityPost` */
+export const SdkDeleteCommunityPost: PersistedOperation<
+  SdkDeleteCommunityPostMutation,
+  SdkDeleteCommunityPostMutationVariables
+> = {
+  id: '2733326235e810dc95815837e8efa79acb75f77298fb7203443c5bde25e03d74',
+  operationName: 'SdkDeleteCommunityPost',
+};
+
 /** `SdkDigitalProduct` */
 export const SdkDigitalProduct: PersistedOperation<
   SdkDigitalProductQuery,
   SdkDigitalProductQueryVariables
 > = {
-  id: '0c69b23bbb8394c67e45ae8dc1cef8a736b721418dca256f147c72e0f7278447',
+  id: '63d099676f59d9e2bb69a0a9b6bb2319d1e517ab384245edad91ef228abcc5d4',
   operationName: 'SdkDigitalProduct',
+};
+
+/** `SdkForm` */
+export const SdkForm: PersistedOperation<
+  SdkFormQuery,
+  SdkFormQueryVariables
+> = {
+  id: '2312e30fb061017b75dd371c880da85336b16c6f708c7317d88decc0e7ad36ef',
+  operationName: 'SdkForm',
 };
 
 /** `SdkForum` */
@@ -240,7 +482,7 @@ export const SdkForum: PersistedOperation<
   SdkForumQuery,
   SdkForumQueryVariables
 > = {
-  id: 'c826b33b016085e2c30e51d64c24365c616c63f53d4802933c7bd17e7f8fef80',
+  id: '706113666a9ae597982f7a975abc1022c2962f46f90d2a40ccf096eb0ebab3a7',
   operationName: 'SdkForum',
 };
 
@@ -262,12 +504,30 @@ export const SdkGetAttachmentUrl: PersistedOperation<
   operationName: 'SdkGetAttachmentUrl',
 };
 
+/** `SdkJoinCommunitySpace` */
+export const SdkJoinCommunitySpace: PersistedOperation<
+  SdkJoinCommunitySpaceMutation,
+  SdkJoinCommunitySpaceMutationVariables
+> = {
+  id: '3eb191cda31b9db0d15980ad4488a0ec0b594a4cdb5bc443bcbdfd2b0acf654f',
+  operationName: 'SdkJoinCommunitySpace',
+};
+
+/** `SdkLeaveCommunitySpace` */
+export const SdkLeaveCommunitySpace: PersistedOperation<
+  SdkLeaveCommunitySpaceMutation,
+  SdkLeaveCommunitySpaceMutationVariables
+> = {
+  id: 'c5b650ff7ff8fe1cf1c8997e49ccaabdb3a993e330ddc363244048769fdc0da9',
+  operationName: 'SdkLeaveCommunitySpace',
+};
+
 /** `SdkLiveEvent` */
 export const SdkLiveEvent: PersistedOperation<
   SdkLiveEventQuery,
   SdkLiveEventQueryVariables
 > = {
-  id: '6c4a5172bfa16a3fe8ff9abd67fbe285b005e639f4183a2ddfcb733f30eeba9e',
+  id: 'd8ea440d043bef1b28467ed1fca890d4cf6fe3e9790eb4bf291674fc2fd45001',
   operationName: 'SdkLiveEvent',
 };
 
@@ -307,6 +567,15 @@ export const SdkMarkCartItemAsGift: PersistedOperation<
   operationName: 'SdkMarkCartItemAsGift',
 };
 
+/** `SdkMarkCommunitySpaceRead` */
+export const SdkMarkCommunitySpaceRead: PersistedOperation<
+  SdkMarkCommunitySpaceReadMutation,
+  SdkMarkCommunitySpaceReadMutationVariables
+> = {
+  id: '247c87106c8df5f4eeea6e47d1dfa64ddf6c5e17b55c1705062d2ab68025e62f',
+  operationName: 'SdkMarkCommunitySpaceRead',
+};
+
 /** `SdkOrder` */
 export const SdkOrder: PersistedOperation<
   SdkOrderQuery,
@@ -316,6 +585,24 @@ export const SdkOrder: PersistedOperation<
   operationName: 'SdkOrder',
 };
 
+/** `SdkOrderableJsonLdFacts` */
+export const SdkOrderableJsonLdFacts: PersistedOperation<
+  SdkOrderableJsonLdFactsQuery,
+  SdkOrderableJsonLdFactsQueryVariables
+> = {
+  id: '09e9619e79ce9325acd4815b54b8a1e71af26afdc85398943122a590aded188a',
+  operationName: 'SdkOrderableJsonLdFacts',
+};
+
+/** `SdkOrgSubscriptionProducts` */
+export const SdkOrgSubscriptionProducts: PersistedOperation<
+  SdkOrgSubscriptionProductsQuery,
+  SdkOrgSubscriptionProductsQueryVariables
+> = {
+  id: '296560d3e52aa27eab4af08b53b09be4eb60748d6f508fadc5f796f350ad64ff',
+  operationName: 'SdkOrgSubscriptionProducts',
+};
+
 /** `SdkOrganizationIdBySlug` */
 export const SdkOrganizationIdBySlug: PersistedOperation<
   SdkOrganizationIdBySlugQuery,
@@ -323,6 +610,24 @@ export const SdkOrganizationIdBySlug: PersistedOperation<
 > = {
   id: '8b2d500378479f3c374b2eec0bd6213569e3ee309036cfae04bcbe0ecb8d3c02',
   operationName: 'SdkOrganizationIdBySlug',
+};
+
+/** `SdkPublicCommunityEvent` */
+export const SdkPublicCommunityEvent: PersistedOperation<
+  SdkPublicCommunityEventQuery,
+  SdkPublicCommunityEventQueryVariables
+> = {
+  id: '21765772220d3ad8156ab16f5ab642186d70effc928e07a480465d3f06a12499',
+  operationName: 'SdkPublicCommunityEvent',
+};
+
+/** `SdkPublicCommunityEventSeries` */
+export const SdkPublicCommunityEventSeries: PersistedOperation<
+  SdkPublicCommunityEventSeriesQuery,
+  SdkPublicCommunityEventSeriesQueryVariables
+> = {
+  id: '5b6befb7624f7863ee3e5c565bf0a377f8910902144e0588b938f693296e926a',
+  operationName: 'SdkPublicCommunityEventSeries',
 };
 
 /** `SdkRemoveCartOrderable` */
@@ -343,6 +648,15 @@ export const SdkRemoveCouponCode: PersistedOperation<
   operationName: 'SdkRemoveCouponCode',
 };
 
+/** `SdkReportCommunityContent` */
+export const SdkReportCommunityContent: PersistedOperation<
+  SdkReportCommunityContentMutation,
+  SdkReportCommunityContentMutationVariables
+> = {
+  id: '4af0a352bfa15ff1907ff2adc5f8da6c70523fdab4d2b409213477cb2947cd69',
+  operationName: 'SdkReportCommunityContent',
+};
+
 /** `SdkRequestPasswordReset` */
 export const SdkRequestPasswordReset: PersistedOperation<
   SdkRequestPasswordResetMutation,
@@ -361,6 +675,15 @@ export const SdkResetPassword: PersistedOperation<
   operationName: 'SdkResetPassword',
 };
 
+/** `SdkRsvpToCommunityEvent` */
+export const SdkRsvpToCommunityEvent: PersistedOperation<
+  SdkRsvpToCommunityEventMutation,
+  SdkRsvpToCommunityEventMutationVariables
+> = {
+  id: '3dfd4da1f77a2ae95672f986791d2621de05e63485232bce31c366af767ff54d',
+  operationName: 'SdkRsvpToCommunityEvent',
+};
+
 /** `SdkSendLoginOtp` */
 export const SdkSendLoginOtp: PersistedOperation<
   SdkSendLoginOtpMutation,
@@ -368,6 +691,33 @@ export const SdkSendLoginOtp: PersistedOperation<
 > = {
   id: '7229971bbafa4d3c458ee5e4f01e4ad74bf6d98644e05b2c0e871d318364071f',
   operationName: 'SdkSendLoginOtp',
+};
+
+/** `SdkSetCommunityCommentReaction` */
+export const SdkSetCommunityCommentReaction: PersistedOperation<
+  SdkSetCommunityCommentReactionMutation,
+  SdkSetCommunityCommentReactionMutationVariables
+> = {
+  id: '3dfc6af8982c2b74ee6b50bbaaf27df52530837da333319c0810bc561221742d',
+  operationName: 'SdkSetCommunityCommentReaction',
+};
+
+/** `SdkSetCommunityPostReaction` */
+export const SdkSetCommunityPostReaction: PersistedOperation<
+  SdkSetCommunityPostReactionMutation,
+  SdkSetCommunityPostReactionMutationVariables
+> = {
+  id: '5b687dc4c8d3196698281c29f66834134f7519bdb68296db22e29795a25e0d6a',
+  operationName: 'SdkSetCommunityPostReaction',
+};
+
+/** `SdkStartFormSession` */
+export const SdkStartFormSession: PersistedOperation<
+  SdkStartFormSessionMutation,
+  SdkStartFormSessionMutationVariables
+> = {
+  id: '8c06370e178ec6dbe46bf63a3a114bade3836fa5737fde532d31abf3f58dcee0',
+  operationName: 'SdkStartFormSession',
 };
 
 /** `SdkSubmitAssignmentSubmission` */
@@ -379,6 +729,15 @@ export const SdkSubmitAssignmentSubmission: PersistedOperation<
   operationName: 'SdkSubmitAssignmentSubmission',
 };
 
+/** `SdkSubmitFormQuestions` */
+export const SdkSubmitFormQuestions: PersistedOperation<
+  SdkSubmitFormQuestionsMutation,
+  SdkSubmitFormQuestionsMutationVariables
+> = {
+  id: 'f35a03f4edd49f03343b30ea3347f8f951f90cbb4022112ac9319f0c44d6aa1a',
+  operationName: 'SdkSubmitFormQuestions',
+};
+
 /** `SdkSubmitQuiz` */
 export const SdkSubmitQuiz: PersistedOperation<
   SdkSubmitQuizMutation,
@@ -388,6 +747,33 @@ export const SdkSubmitQuiz: PersistedOperation<
   operationName: 'SdkSubmitQuiz',
 };
 
+/** `SdkSubscribeMailingList` */
+export const SdkSubscribeMailingList: PersistedOperation<
+  SdkSubscribeMailingListMutation,
+  SdkSubscribeMailingListMutationVariables
+> = {
+  id: '587884eba59cafedaaa5ef5c8806a0a19f4272baf1dd20477e8c6e1944f9c64c',
+  operationName: 'SdkSubscribeMailingList',
+};
+
+/** `SdkUpcomingCommunityEventSeries` */
+export const SdkUpcomingCommunityEventSeries: PersistedOperation<
+  SdkUpcomingCommunityEventSeriesQuery,
+  SdkUpcomingCommunityEventSeriesQueryVariables
+> = {
+  id: 'a741edbac196f8f4f80165f4f2cf61122848fafb1f0f9b85a70581291ff2c920',
+  operationName: 'SdkUpcomingCommunityEventSeries',
+};
+
+/** `SdkUpcomingCommunityEvents` */
+export const SdkUpcomingCommunityEvents: PersistedOperation<
+  SdkUpcomingCommunityEventsQuery,
+  SdkUpcomingCommunityEventsQueryVariables
+> = {
+  id: '9f983f3c1ec127b70087d2bec74e0d7dd913e82c5e3e7a8d349984035751f3f2',
+  operationName: 'SdkUpcomingCommunityEvents',
+};
+
 /** `SdkUpdateAssignmentSubmission` */
 export const SdkUpdateAssignmentSubmission: PersistedOperation<
   SdkUpdateAssignmentSubmissionMutation,
@@ -395,6 +781,24 @@ export const SdkUpdateAssignmentSubmission: PersistedOperation<
 > = {
   id: 'ddf3ed610960793ada110134069e059b10b3f2fac8c771915ccc974d31479452',
   operationName: 'SdkUpdateAssignmentSubmission',
+};
+
+/** `SdkUpdateCommunityComment` */
+export const SdkUpdateCommunityComment: PersistedOperation<
+  SdkUpdateCommunityCommentMutation,
+  SdkUpdateCommunityCommentMutationVariables
+> = {
+  id: '521118e04e7a96e5600a190de773e9e4e061a94f60df9b9c3eac595bdcfb5548',
+  operationName: 'SdkUpdateCommunityComment',
+};
+
+/** `SdkUpdateCommunityPost` */
+export const SdkUpdateCommunityPost: PersistedOperation<
+  SdkUpdateCommunityPostMutation,
+  SdkUpdateCommunityPostMutationVariables
+> = {
+  id: '067e73bbedbe772d3565122e7ccc55c78bd39d5ab02983b9883f82763c83b9ad',
+  operationName: 'SdkUpdateCommunityPost',
 };
 
 /** `SdkUpdateCourseItemProgress` */
@@ -424,6 +828,33 @@ export const SdkUpdateForumPostReaction: PersistedOperation<
   operationName: 'SdkUpdateForumPostReaction',
 };
 
+/** `SdkUpdateVideoWatchState` */
+export const SdkUpdateVideoWatchState: PersistedOperation<
+  SdkUpdateVideoWatchStateMutation,
+  SdkUpdateVideoWatchStateMutationVariables
+> = {
+  id: '4ea14ca6bdf9c2150cad9b3501c74b8cb480b2585e342596824fa5ee9e0ddb24',
+  operationName: 'SdkUpdateVideoWatchState',
+};
+
+/** `SdkVideoPlayback` */
+export const SdkVideoPlayback: PersistedOperation<
+  SdkVideoPlaybackQuery,
+  SdkVideoPlaybackQueryVariables
+> = {
+  id: '51600e438f4c3fd0a52f035911a9c0f0325113cb74b81d9f04f26b49579dfc71',
+  operationName: 'SdkVideoPlayback',
+};
+
+/** `SdkVideoWatchState` */
+export const SdkVideoWatchState: PersistedOperation<
+  SdkVideoWatchStateQuery,
+  SdkVideoWatchStateQueryVariables
+> = {
+  id: '4d7116206228143d7d6247984547aea40db504a05439fe18c527a46aca6b5dad',
+  operationName: 'SdkVideoWatchState',
+};
+
 /** `SdkViewerCertificates` */
 export const SdkViewerCertificates: PersistedOperation<
   SdkViewerCertificatesQuery,
@@ -449,6 +880,15 @@ export const SdkViewerOrders: PersistedOperation<
 > = {
   id: 'f71c46306826fff95aadc2d8fef41bba60707bde61fd68d35b771200ac204ab9',
   operationName: 'SdkViewerOrders',
+};
+
+/** `SdkViewerOrgSubscriptions` */
+export const SdkViewerOrgSubscriptions: PersistedOperation<
+  SdkViewerOrgSubscriptionsQuery,
+  SdkViewerOrgSubscriptionsQueryVariables
+> = {
+  id: '093de19d00c624a5620442abbe9e7757ec8920efb20747f774ca904d713674fa',
+  operationName: 'SdkViewerOrgSubscriptions',
 };
 
 /** `SdkViewerSession` */

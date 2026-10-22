@@ -1,0 +1,145 @@
+query SdkForm($organizationSlug: String!, $slug: String!) {
+  organization(slug: $organizationSlug) {
+    id
+    form(slug: $slug) {
+      id
+      title
+      slug
+      type
+      publishStatus
+      sections {
+        id
+        title
+        questions {
+          __typename
+          id
+          question
+          required
+          ... on TextFormQuestion {
+            minLength
+            maxLength
+            placeholder
+          }
+          ... on TextareaFormQuestion {
+            minLength
+            maxLength
+            placeholder
+            allowRichText
+          }
+          ... on ContactFormQuestion {
+            contactType: type
+          }
+          ... on SelectFormQuestion {
+            options
+            placeholder
+            allowOther
+            otherPlaceholder
+            otherMinLength
+            otherMaxLength
+          }
+          ... on RadioFormQuestion {
+            options
+            allowOther
+            otherPlaceholder
+            otherMinLength
+            otherMaxLength
+          }
+          ... on CheckboxFormQuestion {
+            options
+            minChoices
+            maxChoices
+            allowOther
+            otherPlaceholder
+            otherMinLength
+            otherMaxLength
+          }
+          ... on MultiselectFormQuestion {
+            options
+            placeholder
+            minChoices
+            maxChoices
+            allowOther
+            otherPlaceholder
+            otherMinLength
+            otherMaxLength
+          }
+          ... on LinearScaleFormQuestion {
+            min
+            max
+            step
+            default
+            minLabel
+            maxLabel
+            centerLabel
+          }
+          ... on DateFormQuestion {
+            dateType: type
+          }
+          ... on MatrixFormQuestion {
+            rows
+            columns
+          }
+          ... on ContentFormQuestion {
+            content
+          }
+          ... on FileFormQuestion {
+            fileRestrictions {
+              allowedFileTypes
+              minNumberOfFiles
+              maxNumberOfFiles
+              maxFileSize
+              maxTotalFileSize
+              maxDurationSeconds
+            }
+          }
+          ... on PaymentFormQuestion {
+            currency
+            minPrice
+            maxPrice
+            payWhatYouWant
+            description
+          }
+          ... on TagSelectFormQuestion {
+            tagIds
+            allowMultiple
+            minSelections
+            maxSelections
+            allowOther
+            otherPlaceholder
+            otherMinLength
+            otherMaxLength
+            tags {
+              id
+              name
+              color
+            }
+          }
+          ... on TagGroupSelectFormQuestion {
+            tagGroupId
+            allowMultiple
+            minSelections
+            maxSelections
+            allowOther
+            otherPlaceholder
+            otherMinLength
+            otherMaxLength
+            availableTags {
+              id
+              name
+              color
+            }
+          }
+          ... on CustomFieldFormQuestion {
+            customFieldDefinitionId
+            customFieldDefinition {
+              id
+              title
+              type
+              validationSchema
+            }
+          }
+        }
+      }
+    }
+  }
+}

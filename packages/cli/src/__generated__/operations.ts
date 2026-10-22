@@ -14,7 +14,7 @@ export const SdkActivateSiteBundle = {
 
 /** `SdkCreateOrgRouteManifestEntry` */
 export const SdkCreateOrgRouteManifestEntry = {
-  id: '18e5ba356cc2f87d337d1e585c17a3f703c4c9e0beca26bc0ec2e05b77d6f0c5',
+  id: '123a98af5af8ce4df40e45dfb88b21295057c41be47dae279d76c2c47ae69f3c',
   operationName: 'SdkCreateOrgRouteManifestEntry',
 } as const;
 
@@ -24,10 +24,22 @@ export const SdkCreateSiteBundle = {
   operationName: 'SdkCreateSiteBundle',
 } as const;
 
+/** `SdkDeleteOrgRouteManifestEntry` */
+export const SdkDeleteOrgRouteManifestEntry = {
+  id: 'd8e325004837350f3fca61ad2f301b285a3043025c1469de83d0e7970ba815ce',
+  operationName: 'SdkDeleteOrgRouteManifestEntry',
+} as const;
+
 /** `SdkFinalizeSiteBundle` */
 export const SdkFinalizeSiteBundle = {
   id: '7d0aed4b26f18449312247b689ee6ae2ab8994945bec29629652a736bd5fecaf',
   operationName: 'SdkFinalizeSiteBundle',
+} as const;
+
+/** `SdkOrgRouteManifestEntries` */
+export const SdkOrgRouteManifestEntries = {
+  id: '1229c200c9eb8629412e13b8841660306cfa5e5ccf6e8746d957e9d50fa6952e',
+  operationName: 'SdkOrgRouteManifestEntries',
 } as const;
 
 /** `SdkOrganizationIdBySlug` */
@@ -52,4 +64,10 @@ export const SdkSignSiteBundleUpload = {
 export const SdkUnpinGeneratedPageEntity = {
   id: '662e001108b6063ecf1f3c297cb72d548a1317b35c9b13b0c887fe296f433c25',
   operationName: 'SdkUnpinGeneratedPageEntity',
+} as const;
+
+/** `SdkUpdateOrgRouteManifestEntry` */
+export const SdkUpdateOrgRouteManifestEntry = {
+  id: '6f959695e4c54c960d77ee06f2c5863fe2f99252ddaf0f6918471416c12ceda5',
+  operationName: 'SdkUpdateOrgRouteManifestEntry',
 } as const;

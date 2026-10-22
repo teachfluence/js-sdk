@@ -52,17 +52,41 @@ query SdkCourseItemDetail($itemId: ID!) {
     }
     ... on ArticleCourseItem {
       content
+      contentRich {
+        html
+        text
+      }
     }
     ... on DocumentCourseItem {
       description
+      descriptionRich {
+        html
+        text
+      }
     }
     ... on QuestionCourseItem {
       description
+      descriptionRich {
+        html
+        text
+      }
       question
+      questionRich {
+        html
+        text
+      }
       hints
+      hintsRich {
+        html
+        text
+      }
     }
     ... on QuizCourseItem {
       description
+      descriptionRich {
+        html
+        text
+      }
       allowSkip
       allowRetake
       quiz {
@@ -70,37 +94,73 @@ query SdkCourseItemDetail($itemId: ID!) {
         id
         title
         question
+        questionRich {
+          html
+          text
+        }
         ... on MultipleChoiceQuiz {
           options {
             content
+            contentRich {
+              html
+              text
+            }
             description
+            descriptionRich {
+              html
+              text
+            }
             isCorrect
           }
         }
         ... on FreeResponseQuiz {
           sampleAnswer
+          sampleAnswerRich {
+            html
+            text
+          }
         }
         ... on PhraseSelectionQuiz {
           paragraph
+          paragraphRich {
+            html
+            text
+          }
           minSelections
           maxSelections
           selectablePhrases {
             phraseId
             content
+            contentRich {
+              html
+              text
+            }
           }
         }
         ... on CategorizationQuiz {
           items {
             id
             content
+            contentRich {
+              html
+              text
+            }
           }
           groups {
             id
             content
+            contentRich {
+              html
+              text
+            }
           }
         }
         ... on FillInBlankQuiz {
           content
+          contentRich {
+            html
+            text
+          }
           blanks {
             blankId
           }
@@ -110,16 +170,28 @@ query SdkCourseItemDetail($itemId: ID!) {
           items {
             id
             content
+            contentRich {
+              html
+              text
+            }
           }
         }
         ... on MatchingQuiz {
           leftItems {
             id
             content
+            contentRich {
+              html
+              text
+            }
           }
           rightItems {
             id
             content
+            contentRich {
+              html
+              text
+            }
           }
         }
       }
@@ -128,14 +200,30 @@ query SdkCourseItemDetail($itemId: ID!) {
         status
         grade
         gradeFeedback
+        gradeFeedbackRich {
+          html
+          text
+        }
         selectedChoiceIndex
         freeResponseAnswer
+        freeResponseAnswerRich {
+          html
+          text
+        }
         structuredAnswer
         gradingDetails
         submittedAt
         selectedOption {
           content
+          contentRich {
+            html
+            text
+          }
           description
+          descriptionRich {
+            html
+            text
+          }
           isCorrect
         }
       }
@@ -148,6 +236,10 @@ query SdkCourseItemDetail($itemId: ID!) {
     }
     ... on AssignmentCourseItem {
       description
+      descriptionRich {
+        html
+        text
+      }
       allowRichText
       allowFileUpload
       allowMultipleSubmissions
@@ -157,8 +249,16 @@ query SdkCourseItemDetail($itemId: ID!) {
         id
         status
         freeResponseAnswer
+        freeResponseAnswerRich {
+          html
+          text
+        }
         grade
         gradeFeedback
+        gradeFeedbackRich {
+          html
+          text
+        }
         createdAt
         submittedAt
         gradedAt
@@ -173,6 +273,10 @@ query SdkCourseItemDetail($itemId: ID!) {
     }
     ... on ExamCourseItem {
       instructions
+      instructionsRich {
+        html
+        text
+      }
       quizCount
       timeLimitSeconds
       passingGradePercentage
@@ -190,10 +294,18 @@ query SdkCourseItemDetail($itemId: ID!) {
     }
     ... on EmbedCourseItem {
       description
+      descriptionRich {
+        html
+        text
+      }
       url
     }
     ... on LiveCourseItem {
       description
+      descriptionRich {
+        html
+        text
+      }
       url
       platform
       startDate

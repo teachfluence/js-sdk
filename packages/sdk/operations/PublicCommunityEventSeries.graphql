@@ -1,0 +1,69 @@
+query SdkPublicCommunityEventSeries($organizationSlug: String!, $seriesId: ID!) {
+  publicCommunityEventSeriesTeaser(organizationSlug: $organizationSlug, seriesId: $seriesId) {
+    id
+    seriesId
+    title
+    timezone
+    accessType
+    hasEnded
+    upcomingOccurrenceCount
+    spaceName
+    hostName
+    hostNames
+    locationType
+    venueName
+    addressLine
+    city
+    locationText
+    description
+    descriptionRich {
+      html
+      text
+    }
+    image
+    recurrence {
+      frequency
+      interval
+      weekdays
+      monthlyMode
+      nthWeekday
+      nthOrdinal
+      startDate
+      startTime
+      timezone
+      until
+      count
+    }
+    nextOccurrence {
+      id
+      eventId
+      startAt
+      endAt
+      timezone
+      isFull
+      isCancelled
+      goingCount
+    }
+    upcomingOccurrences(limit: 10) {
+      id
+      eventId
+      title
+      startAt
+      endAt
+      timezone
+      isFull
+      isCancelled
+      goingCount
+    }
+    tags {
+      id
+      name
+      slug
+      color
+    }
+    unlockingTiers {
+      name
+      slug
+    }
+  }
+}

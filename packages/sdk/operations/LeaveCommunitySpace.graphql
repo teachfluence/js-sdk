@@ -1,0 +1,20 @@
+mutation SdkLeaveCommunitySpace($input: LeaveCommunitySpaceInput!) {
+  leaveCommunitySpace(input: $input) {
+    communitySpace {
+      id
+      viewerCanPost
+      viewerCanJoin
+      viewerCanLeave
+      viewerMembership {
+        id
+        role
+        status
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

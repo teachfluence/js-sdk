@@ -1,0 +1,61 @@
+query SdkCommunityPost($postId: ID!) {
+  communityPost(id: $postId) {
+    id
+    title
+    content
+    type
+    status
+    createdAt
+    lastActivityAt
+    editedAt
+    isPinned
+    isLocked
+    commentCount
+    viewerIsAuthor
+    viewerCanComment
+    viewerCanEdit
+    viewerCanDelete
+    viewerCanReport
+    viewerHasReported
+    viewerContentWithheld
+    space {
+      id
+      name
+      slug
+      viewerCanPost
+    }
+    author {
+      id
+      displayName
+      image
+      isStaff
+      viewerIsSelf
+    }
+    reactions {
+      kind
+      count
+      viewerReacted
+    }
+    reactors(first: 1) {
+      edges {
+        kind
+        reactedAt
+        node {
+          id
+          displayName
+          image
+          isStaff
+          viewerIsSelf
+        }
+      }
+    }
+    attachments {
+      id
+      fileName
+      contentType
+      sizeBytes
+      scanStatus
+      url
+    }
+  }
+}

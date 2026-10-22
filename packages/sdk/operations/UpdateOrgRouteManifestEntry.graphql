@@ -1,0 +1,21 @@
+mutation SdkUpdateOrgRouteManifestEntry($input: UpdateOrgRouteManifestEntryInput!) {
+  updateOrgRouteManifestEntry(input: $input) {
+    orgRouteManifestEntry {
+      id
+      pathPattern
+      scope
+      priority
+      isActive
+      eclipsedPaths
+    }
+    shadowReport {
+      count
+      sampleUrls
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

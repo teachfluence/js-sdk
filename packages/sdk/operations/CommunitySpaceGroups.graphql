@@ -1,0 +1,15 @@
+query SdkCommunitySpaceGroups($organizationId: ID!) {
+  communitySpaceGroups(organizationId: $organizationId) {
+    id
+    name
+    slug
+    objectIndex
+    spaces {
+      id
+      name
+      slug
+      viewerCanView
+      viewerUnreadPostCount
+    }
+  }
+}

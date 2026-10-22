@@ -12,6 +12,10 @@ query SdkForum(
       title
       slug
       description
+      descriptionRich {
+        html
+        text
+      }
       viewerCanPost
       viewerCanComment
       viewerCanReact
@@ -40,6 +44,10 @@ query SdkForum(
             slug
             title
             content
+            contentRich {
+              html
+              text
+            }
             createdAt
             status
             positiveReactionCount: reactionCount(isPositive: true)

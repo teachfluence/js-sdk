@@ -1,0 +1,13 @@
+mutation SdkCreateCommunityAttachmentUpload($input: CreateCommunityAttachmentUploadInput!) {
+  createCommunityAttachmentUpload(input: $input) {
+    attachmentId
+    s3Key
+    apiUrl
+    formFields
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

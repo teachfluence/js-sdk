@@ -1,6 +1,6 @@
 {
   "name": "@teachfluence/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Deploy your own frontend to Teachfluence.",
   "license": "MIT",
   "repository": {
@@ -19,6 +19,9 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "jszip": "3.10.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

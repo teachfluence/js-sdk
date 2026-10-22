@@ -1,0 +1,10 @@
+query SdkOrgRouteManifestEntries($organizationId: ID!) {
+  orgRouteManifestEntries(organizationId: $organizationId) {
+    id
+    pathPattern
+    scope
+    priority
+    isActive
+    targetKind
+  }
+}

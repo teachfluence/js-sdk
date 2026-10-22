@@ -1,0 +1,61 @@
+query SdkCommunityEvents($organizationSlug: String!, $after: String, $spaceId: ID, $timeframe: CommunityEventTimeframe, $relation: CommunityEventViewerRelation) {
+  organization(slug: $organizationSlug) {
+    id
+    communityEventsConnection(first: 25, after: $after, spaceId: $spaceId, timeframe: $timeframe, relation: $relation) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          id
+          title
+          subtitle
+          description
+          descriptionRich {
+            html
+            text
+          }
+          image
+          startAt
+          endAt
+          timezone
+          status
+          locationType
+          locationText
+          meetingUrl
+          rsvpLimit
+          isFull
+          goingCount
+          remainingCapacity
+          waitlistEnabled
+          rsvpClosesAt
+          viewerCanRsvp
+          viewerRsvp {
+            id
+            status
+          }
+          space {
+            id
+            name
+            slug
+          }
+          hosts {
+            id
+            displayName
+            image
+            isStaff
+          }
+          recordingVideo {
+            id
+            url
+            posterUrl
+            duration
+            status
+          }
+        }
+      }
+    }
+  }
+}

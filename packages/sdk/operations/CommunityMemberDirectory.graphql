@@ -1,0 +1,22 @@
+query SdkCommunityMemberDirectory($spaceId: ID!, $first: Int!, $after: String, $query: String) {
+  communitySpace(id: $spaceId) {
+    id
+    memberDirectoryWithheldReason
+    memberDirectory(first: $first, after: $after, query: $query) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          id
+          displayName
+          image
+          isStaff
+          viewerIsSelf
+        }
+      }
+    }
+  }
+}

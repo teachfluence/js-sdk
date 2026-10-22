@@ -5,6 +5,7 @@ query SdkLiveEvent($organizationSlug: String!, $slug: String!) {
     slug
     shortDescription
     viewerCanOrder
+    viewerBlockedByPurchaseGate
     viewerCanOrderAsGift
     salesPaused
     remainingCapacity

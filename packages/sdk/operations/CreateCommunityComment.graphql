@@ -1,0 +1,63 @@
+mutation SdkCreateCommunityComment($input: CreateCommunityCommentInput!) {
+  createCommunityComment(input: $input) {
+    communityComment {
+      id
+      parentCommentId
+      content
+      status
+      createdAt
+      author {
+        id
+        displayName
+        image
+        isStaff
+        viewerIsSelf
+      }
+    }
+    communityCommentEdge {
+      cursor
+      node {
+        id
+        parentCommentId
+        content
+        status
+        createdAt
+        editedAt
+        replyCount
+        viewerIsAuthor
+        viewerCanReply
+        viewerCanEdit
+        viewerCanDelete
+        viewerCanReport
+        viewerHasReported
+        viewerContentWithheld
+        author {
+          id
+          displayName
+          image
+          isStaff
+          viewerIsSelf
+        }
+        reactions {
+          kind
+          count
+          viewerReacted
+        }
+      }
+    }
+    communityPost {
+      id
+      commentCount
+    }
+    parentComment {
+      id
+      replyCount
+    }
+    clientMutationToken
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

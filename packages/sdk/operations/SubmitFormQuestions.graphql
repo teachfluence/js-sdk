@@ -1,0 +1,14 @@
+mutation SdkSubmitFormQuestions($input: SubmitFormQuestionsInput!) {
+  submitFormQuestions(input: $input) {
+    formSession {
+      id
+      status
+      finishedAt
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

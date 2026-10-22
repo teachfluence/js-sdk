@@ -1,0 +1,16 @@
+mutation SdkUpdateCommunityComment($input: UpdateCommunityCommentInput!) {
+  updateCommunityComment(input: $input) {
+    communityComment {
+      id
+      content
+      editedAt
+      viewerCanEdit
+      viewerCanDelete
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

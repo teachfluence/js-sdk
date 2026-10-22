@@ -1,0 +1,90 @@
+mutation SdkCreateCommunityPost($input: CreateCommunityPostInput!) {
+  createCommunityPost(input: $input) {
+    communityPost {
+      id
+      title
+      content
+      status
+      createdAt
+      space {
+        id
+        slug
+      }
+    }
+    communityPostEdge {
+      cursor
+      node {
+        ...SdkCommunityPostCard
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
+fragment SdkCommunityPostCard on CommunityPost {
+  id
+  title
+  content
+  contentRich {
+    html
+    text
+  }
+  type
+  status
+  createdAt
+  lastActivityAt
+  editedAt
+  isPinned
+  isLocked
+  pinnedAt
+  commentCount
+  viewerIsAuthor
+  viewerCanComment
+  viewerCanEdit
+  viewerCanDelete
+  viewerCanReport
+  viewerHasReported
+  viewerContentWithheld
+  space {
+    id
+    name
+    slug
+  }
+  author {
+    id
+    displayName
+    image
+    isStaff
+    viewerIsSelf
+  }
+  reactions {
+    kind
+    count
+    viewerReacted
+  }
+  reactors(first: 1) {
+    edges {
+      kind
+      reactedAt
+      node {
+        id
+        displayName
+        image
+        isStaff
+        viewerIsSelf
+      }
+    }
+  }
+  attachments {
+    id
+    fileName
+    contentType
+    sizeBytes
+    scanStatus
+    url
+  }
+}

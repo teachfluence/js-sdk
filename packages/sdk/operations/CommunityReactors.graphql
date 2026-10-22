@@ -1,0 +1,40 @@
+query SdkCommunityReactors($nodeId: ID!, $first: Int!, $after: String, $kind: CommunityReactionKind) {
+  node(id: $nodeId) {
+    __typename
+    id
+    ... on CommunityPost {
+      reactors(first: $first, after: $after, kind: $kind) {
+        ...SdkCommunityReactorPage
+      }
+    }
+    ... on CommunityComment {
+      reactors(first: $first, after: $after, kind: $kind) {
+        ...SdkCommunityReactorPage
+      }
+    }
+    ... on CommunityChatMessage {
+      reactors(first: $first, after: $after, kind: $kind) {
+        ...SdkCommunityReactorPage
+      }
+    }
+  }
+}
+
+fragment SdkCommunityReactorPage on CommunityReactorConnection {
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+  edges {
+    cursor
+    kind
+    reactedAt
+    node {
+      id
+      displayName
+      image
+      isStaff
+      viewerIsSelf
+    }
+  }
+}

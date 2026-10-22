@@ -6,6 +6,7 @@ mutation SdkCreateOrgRouteManifestEntry($input: CreateOrgRouteManifestEntryInput
       scope
       priority
       isActive
+      eclipsedPaths
     }
     shadowReport {
       count

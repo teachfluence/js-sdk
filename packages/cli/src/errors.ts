@@ -1,3 +1,6 @@
+/** The draft was activated, but the fresh public path could not be confirmed. */
+export class PublishedButUnverifiedError extends Error {}
+
 /**
  * A mistake in how the command was invoked, as opposed to a failure while
  * running it. `main` prints these bare — a user who typed the wrong flag needs

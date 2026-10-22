@@ -1,0 +1,16 @@
+mutation SdkUpdateVideoWatchState($input: UpdateVideoWatchStateInput!) {
+  updateVideoWatchState(input: $input) {
+    video {
+      id
+      viewerWatchState {
+        progress
+        status
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

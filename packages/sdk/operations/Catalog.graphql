@@ -33,6 +33,7 @@ query SdkCatalog($organizationSlug: String!, $first: Int! = 20, $after: String) 
           slug
           shortDescription
           viewerCanOrder
+          viewerBlockedByPurchaseGate
           salesPaused
           sellingPrice {
             amount
@@ -59,6 +60,7 @@ query SdkCatalog($organizationSlug: String!, $first: Int! = 20, $after: String) 
           slug
           shortDescription
           viewerCanOrder
+          viewerBlockedByPurchaseGate
           salesPaused
           sellingPrice {
             amount
@@ -85,6 +87,7 @@ query SdkCatalog($organizationSlug: String!, $first: Int! = 20, $after: String) 
           slug
           shortDescription
           viewerCanOrder
+          viewerBlockedByPurchaseGate
           salesPaused
           sellingPrice {
             amount

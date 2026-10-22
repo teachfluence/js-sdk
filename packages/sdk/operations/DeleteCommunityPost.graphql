@@ -1,0 +1,14 @@
+mutation SdkDeleteCommunityPost($input: DeleteCommunityPostInput!) {
+  deleteCommunityPost(input: $input) {
+    deletedCommunityPostId
+    communitySpace {
+      id
+      postCount
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

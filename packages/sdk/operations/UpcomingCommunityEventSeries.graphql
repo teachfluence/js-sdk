@@ -1,0 +1,50 @@
+query SdkUpcomingCommunityEventSeries($organizationSlug: String!, $from: DateTimeISO!, $to: DateTimeISO!) {
+  publicCommunityEventSeriesTeaserWindow(organizationSlug: $organizationSlug, from: $from, to: $to) {
+    truncated
+    limit
+    series {
+      id
+      seriesId
+      title
+      timezone
+      locationType
+      locationText
+      accessType
+      hasEnded
+      upcomingOccurrenceCount
+      spaceName
+      hostName
+      hostNames
+      description
+      descriptionRich {
+        html
+        text
+      }
+      image
+      recurrence {
+        frequency
+        interval
+        weekdays
+        monthlyMode
+        nthWeekday
+        nthOrdinal
+        startDate
+        startTime
+        timezone
+      }
+      nextOccurrence {
+        id
+        startAt
+        endAt
+        timezone
+        isFull
+        isCancelled
+        goingCount
+      }
+      unlockingTiers {
+        name
+        slug
+      }
+    }
+  }
+}

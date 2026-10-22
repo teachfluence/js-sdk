@@ -1,0 +1,56 @@
+query SdkContentBlog($organizationSlug: String!) {
+  organization(slug: $organizationSlug) {
+    contentTree {
+      slug
+      label
+      renderMode
+      pages {
+        slug
+        title
+        description
+        bannerImage
+        publishedAt
+        body
+      }
+      children {
+        slug
+        label
+        renderMode
+        pages {
+          slug
+          title
+          description
+          bannerImage
+          publishedAt
+          body
+        }
+        children {
+          slug
+          label
+          renderMode
+          pages {
+            slug
+            title
+            description
+            bannerImage
+            publishedAt
+            body
+          }
+          children {
+            slug
+            label
+            renderMode
+            pages {
+              slug
+              title
+              description
+              bannerImage
+              publishedAt
+              body
+            }
+          }
+        }
+      }
+    }
+  }
+}

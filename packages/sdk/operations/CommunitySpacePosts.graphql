@@ -1,0 +1,103 @@
+query SdkCommunitySpacePosts($spaceId: ID!, $after: String, $sort: CommunityPostSortOrder, $authorRole: CommunitySpaceMemberRole) {
+  communitySpace(id: $spaceId) {
+    id
+    name
+    slug
+    description
+    viewerCanView
+    viewerCanPost
+    viewerCanJoin
+    viewerRequiresPayment
+    viewerUnreadPostCount
+    viewerJoinsOnFirstPost
+    effectiveSettings {
+      postCreationEnabled
+      postEditingEnabled
+      postDeletionEnabled
+      commentCreationEnabled
+      commentEditingEnabled
+      commentDeletionEnabled
+      autoApprovePosts
+      autoApproveComments
+    }
+    pinnedCommunityPosts {
+      ...SdkCommunityPostCard
+    }
+    posts(first: 25, after: $after, sort: $sort, authorRole: $authorRole) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          ...SdkCommunityPostCard
+        }
+      }
+    }
+  }
+}
+
+fragment SdkCommunityPostCard on CommunityPost {
+  id
+  title
+  content
+  contentRich {
+    html
+    text
+  }
+  type
+  status
+  createdAt
+  lastActivityAt
+  editedAt
+  isPinned
+  isLocked
+  pinnedAt
+  commentCount
+  viewerIsAuthor
+  viewerCanComment
+  viewerCanEdit
+  viewerCanDelete
+  viewerCanReport
+  viewerHasReported
+  viewerContentWithheld
+  space {
+    id
+    name
+    slug
+  }
+  author {
+    id
+    displayName
+    image
+    isStaff
+    viewerIsSelf
+  }
+  reactions {
+    kind
+    count
+    viewerReacted
+  }
+  reactors(first: 1) {
+    edges {
+      kind
+      reactedAt
+      node {
+        id
+        displayName
+        image
+        isStaff
+        viewerIsSelf
+      }
+    }
+  }
+  attachments {
+    id
+    fileName
+    contentType
+    sizeBytes
+    scanStatus
+    url
+  }
+}

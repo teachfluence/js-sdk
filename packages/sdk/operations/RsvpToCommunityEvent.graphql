@@ -1,0 +1,21 @@
+mutation SdkRsvpToCommunityEvent($input: RsvpToCommunityEventInput!) {
+  rsvpToCommunityEvent(input: $input) {
+    communityEvent {
+      id
+      isFull
+      goingCount
+      remainingCapacity
+      viewerCanRsvp
+    }
+    communityEventRsvp {
+      id
+      status
+    }
+    suggestedAction
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

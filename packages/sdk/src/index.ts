@@ -40,3 +40,32 @@ export {
   TeachfluenceUserError,
 } from './errors.js';
 export type { UserError } from './errors.js';
+
+// Structured data, built by the SAME pure functions the platform's own product
+// pages use (copied from the web app at generation time), so a storefront or a
+// bundle render module states a product exactly as the platform would: an
+// Offer only while the public can buy it, an Event only when it can be placed,
+// every node pointing at the org's one `@id`. No network, no clock unless you
+// pass none: feed `orderableNodeFacts` the `node` of `SdkOrderableJsonLdFacts`,
+// add the page's own facts, and serialize what `buildOrderableJsonLd` returns.
+export {
+  buildOrderableJsonLd,
+  buildOrderableOffer,
+  hasOrderableEventEnded,
+} from './__generated__/seo/orderable-jsonld.js';
+export type {
+  OrderableJsonLdFacts,
+  OrderableOffer,
+  OrderableSchemaType,
+} from './__generated__/seo/orderable-jsonld.js';
+export {
+  orderableInstructorFacts,
+  orderableNodeFacts,
+} from './__generated__/seo/orderable-jsonld-node.js';
+export type {
+  OrderableFactsNode,
+  OrderableInstructorEntry,
+} from './__generated__/seo/orderable-jsonld-node.js';
+export { organizationJsonLdId } from './__generated__/seo/organization-jsonld-id.js';
+export type { EventLocationParts } from './__generated__/seo/event-location-jsonld.js';
+export type { OrderablePublicSaleState } from './__generated__/seo/orderable-public-sale-state.js';

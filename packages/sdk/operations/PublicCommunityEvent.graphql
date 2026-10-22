@@ -1,0 +1,87 @@
+query SdkPublicCommunityEvent($organizationSlug: String!, $eventId: ID!) {
+  publicCommunityEventTeaser(organizationSlug: $organizationSlug, eventId: $eventId) {
+    id
+    eventId
+    title
+    startAt
+    endAt
+    timezone
+    accessType
+    isFull
+    isCancelled
+    goingCount
+    spaceName
+    hostName
+    hostNames
+    locationType
+    venueName
+    addressLine
+    city
+    locationText
+    description
+    descriptionRich {
+      html
+      text
+    }
+    image
+    recordingVideo {
+      watchRevision
+      source
+      url
+      externalUrl
+      posterUrl
+      duration
+      captions {
+        language
+        label
+        url
+      }
+    }
+    recordingLanguageVersions {
+      language
+      kind
+      video {
+        watchRevision
+        source
+        url
+        externalUrl
+        posterUrl
+        duration
+        captions {
+          language
+          label
+          url
+        }
+      }
+    }
+    series {
+      id
+      seriesId
+      title
+      hasUpcomingOccurrence
+      recurrence {
+        frequency
+        interval
+        weekdays
+        monthlyMode
+        nthWeekday
+        nthOrdinal
+        startDate
+        startTime
+        timezone
+        until
+        count
+      }
+    }
+    tags {
+      id
+      name
+      slug
+      color
+    }
+    unlockingTiers {
+      name
+      slug
+    }
+  }
+}

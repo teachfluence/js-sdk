@@ -1,0 +1,14 @@
+mutation SdkStartFormSession($input: StartFormSessionInput!) {
+  startFormSession(input: $input) {
+    anonAccessToken
+    formSession {
+      id
+      status
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

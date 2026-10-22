@@ -1,0 +1,45 @@
+query SdkCommunitySpaces($organizationId: ID!, $after: String) {
+  communitySpaces(organizationId: $organizationId, first: 25, after: $after) {
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      node {
+        id
+        name
+        slug
+        description
+        icon
+        image
+        objectIndex
+        postCount
+        lastActivityAt
+        archivedAt
+        viewerUnreadPostCount
+        viewerLastReadAt
+        viewerCanView
+        viewerCanPost
+        viewerCanJoin
+        viewerRequiresPayment
+        viewerMembership {
+          id
+          role
+          status
+        }
+        group {
+          id
+          name
+          slug
+          objectIndex
+        }
+        unlockingTiers {
+          id
+          name
+          slug
+        }
+      }
+    }
+  }
+}

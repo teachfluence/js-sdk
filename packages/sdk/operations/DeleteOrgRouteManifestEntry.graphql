@@ -1,0 +1,17 @@
+mutation SdkDeleteOrgRouteManifestEntry($input: DeleteOrgRouteManifestEntryInput!) {
+  deleteOrgRouteManifestEntry(input: $input) {
+    orgRouteManifestEntry {
+      id
+      pathPattern
+      scope
+      priority
+      isActive
+      targetKind
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

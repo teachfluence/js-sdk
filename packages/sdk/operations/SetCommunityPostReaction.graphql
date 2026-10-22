@@ -1,0 +1,17 @@
+mutation SdkSetCommunityPostReaction($input: SetCommunityPostReactionInput!) {
+  setCommunityPostReaction(input: $input) {
+    communityPost {
+      id
+      reactions {
+        kind
+        count
+        viewerReacted
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

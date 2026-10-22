@@ -1,0 +1,62 @@
+query SdkCommunityPostComments($postId: ID!, $after: String) {
+  communityPost(id: $postId) {
+    id
+    commentCount
+    viewerCanComment
+    comments(first: 25, after: $after) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          ...SdkCommunityCommentFields
+        }
+      }
+    }
+  }
+}
+
+fragment SdkCommunityCommentFields on CommunityComment {
+  id
+  parentCommentId
+  content
+  status
+  createdAt
+  editedAt
+  replyCount
+  viewerIsAuthor
+  viewerCanReply
+  viewerCanEdit
+  viewerCanDelete
+  viewerCanReport
+  viewerHasReported
+  viewerContentWithheld
+  author {
+    id
+    displayName
+    image
+    isStaff
+    viewerIsSelf
+  }
+  reactions {
+    kind
+    count
+    viewerReacted
+  }
+  reactors(first: 1) {
+    edges {
+      kind
+      reactedAt
+      node {
+        id
+        displayName
+        image
+        isStaff
+        viewerIsSelf
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+query SdkUpcomingCommunityEvents($organizationSlug: String!, $from: DateTimeISO!, $to: DateTimeISO!) {
+  publicCommunityEventTeaserWindow(organizationSlug: $organizationSlug, from: $from, to: $to) {
+    truncated
+    limit
+    teasers {
+      id
+      title
+      startAt
+      endAt
+      timezone
+      locationType
+      locationText
+      accessType
+      isFull
+      isCancelled
+      goingCount
+      spaceName
+      hostName
+      hostNames
+      description
+      descriptionRich {
+        html
+        text
+      }
+      image
+      unlockingTiers {
+        name
+        slug
+      }
+    }
+  }
+}

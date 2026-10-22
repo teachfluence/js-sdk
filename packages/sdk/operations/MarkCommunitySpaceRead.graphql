@@ -1,0 +1,14 @@
+mutation SdkMarkCommunitySpaceRead($input: MarkCommunitySpaceReadInput!) {
+  markCommunitySpaceRead(input: $input) {
+    communitySpace {
+      id
+      viewerLastReadAt
+      viewerUnreadPostCount
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

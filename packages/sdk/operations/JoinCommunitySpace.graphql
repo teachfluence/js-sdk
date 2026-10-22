@@ -1,0 +1,20 @@
+mutation SdkJoinCommunitySpace($input: JoinCommunitySpaceInput!) {
+  joinCommunitySpace(input: $input) {
+    communitySpace {
+      id
+      viewerCanPost
+      viewerCanJoin
+      viewerCanLeave
+      viewerMembership {
+        id
+        role
+        status
+      }
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

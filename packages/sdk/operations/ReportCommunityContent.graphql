@@ -1,0 +1,15 @@
+mutation SdkReportCommunityContent($input: ReportCommunityContentInput!) {
+  reportCommunityContent(input: $input) {
+    communityContentReport {
+      id
+      status
+      reason
+      createdAt
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}

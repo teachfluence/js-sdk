@@ -31,6 +31,15 @@ read it. Treat it as an origin hint, never as a secret.
 Passing a `tf_sk_` key to the SDK in a browser throws immediately rather than
 shipping to production and being scraped.
 
+## Where it runs
+
+In a browser, the API answers pages on your organization's own hosts: its
+Teachfluence subdomain (`your-org.teachfluence.com`, including bundle previews)
+and its verified custom domain. A page on any other origin (`localhost`, a
+preview deployment elsewhere, a domain still being verified) is refused by the
+browser. From there, call the API from your server, or work against a bundle
+deployed with the CLI.
+
 ## Catalog
 
 ```ts
@@ -65,6 +74,242 @@ The organization slug comes from the client, so you never repeat it — and
 neither is the organization **id** something you need to fetch and thread
 through every call. The client resolves it once from the slug and reuses it.
 Pass `organizationId` explicitly if you already have it.
+
+### The course's own record
+
+Whatever your organization decided a course has — publisher, page count, a link
+out, a level — lives in custom fields, and `courseCustomFields` reads them.
+
+```ts
+const { course } = await client.catalog.courseCustomFields({ slug: 'odysseia' });
+
+const record = Object.fromEntries(
+  (course?.customFieldValues ?? []).map((f) => [f.fieldDefinition.title, f.value]),
+);
+
+console.log(record['Yayınevi'], record['Sayfa Sayısı']);
+```
+
+**Only fields marked `PUBLIC` come back to a publishable key.** The server picks
+the definition set from the caller's permissions — an API-key request never
+carries a session user, so it always resolves to the `PUBLIC` set — and a
+`PRIVATE` or `HIDDEN` field is not filtered out on your side, it is never sent.
+You do not have to remember to hide anything. That gate is general-purpose and
+predates this operation; `backend#700` allowlisted `courseCustomFields` on the
+strength of it, the same PR that added a dedicated gate for the subscription
+products read below. `fieldDefinition.visibility` in the response above will
+therefore always read `PUBLIC` — kept selected for parity with the
+admin-facing shape, not because it can vary here.
+
+It is a **separate round trip** from `catalog.course`, which is a deliberate
+trade rather than an oversight: an operation's id is the hash of its text, so
+adding these fields to the `course` document would retire the id every already
+deployed storefront has baked into its bundle. Run the two in parallel when you
+need both.
+
+```ts
+const [{ course }, { course: record }] = await Promise.all([
+  client.catalog.course({ slug: 'odysseia' }),
+  client.catalog.courseCustomFields({ slug: 'odysseia' }),
+]);
+```
+
+### Blog and content pages
+
+```ts
+const { organization } = await client.catalog.contentBlog();
+
+const blog = organization?.contentTree.find((category) => category.slug === 'yazilar');
+
+for (const page of blog?.pages ?? []) {
+  console.log(page.title, page.publishedAt, page.body);
+}
+```
+
+Every category on the tree is `ACTIVE` and every page on it is `PUBLISHED` —
+the server never sends a `DRAFT` or `ARCHIVED` page to a publishable key, so
+there's nothing to filter for on your side. `renderMode` (`BLOG`, `ARTICLE`,
+`HELP_CENTER`) is the platform's own public chrome for that category; use it
+to decide how to lay a section out, or just to pick the one you want, as
+above.
+
+`body` is Markdown, already the published version. A page behind an access
+gate the viewer hasn't unlocked comes back with an **empty** `body`, not an
+error and not the gated content — that's enforced on the server, so render an
+empty body as "you don't have access" rather than treating it as a loading
+state or a missing page.
+
+**Categories nest, and a post can live under a subcategory.** Each category
+carries `children`, populated 4 levels deep — the same depth the platform's
+own admin sidebar query uses. A category nested deeper than that comes back
+empty, silently: no error, just missing posts. `blog?.pages` above only
+covers direct children of the category you found; walk `children`
+recursively if you're not certain every post is a direct child of the root.
+
+## Membership
+
+Subscription products, their tiers, and what each tier costs per interval.
+
+```ts
+const { organization } = await client.catalog.subscriptionProducts();
+
+for (const { node: product } of organization?.orgSubscriptionProducts.edges ?? []) {
+  for (const tier of product.tiers) {
+    const monthly = tier.pricing.find((p) => p.interval === 'MONTHLY');
+
+    console.log(product.name, tier.name, monthly?.sellingPrice, monthly?.currency);
+  }
+}
+```
+
+**Only ACTIVE products reach a publishable key.** DRAFT is pricing you have not
+announced and ARCHIVED is pricing you withdrew; the server decides that from the
+caller's permissions, so your storefront cannot ask for them by mistake and does
+not have to remember to hide them.
+
+A tier is an `Orderable`, so `viewerCanOrder` and `salesPaused` tell you whether
+to render a buy action — and the **tier** id is what goes in the cart, never the
+product id.
+
+```ts
+await client.cart.add({ orderableId: tier.id });
+```
+
+Reading this rather than hardcoding the amount is the point: a price typed into
+your own source keeps quoting the old number after you change it in admin, and
+nothing tells you.
+
+`first` accepts 1–100. Outside that range the connection validator does not
+throw — it warns server-side and answers `EMPTY_CONNECTION`, a normal HTTP 200
+whose `totalCount` is a hardcoded 0, indistinguishable from "this org has no
+products." Keep it in range rather than relying on an error to catch a bad
+value.
+
+## Upcoming community events
+
+```ts
+const now = new Date();
+const in90Days = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+const { publicCommunityEventTeaserWindow: eventWindow } = await client.catalog.upcomingEvents({
+  from: now.toISOString(),
+  to: in90Days.toISOString(),
+});
+
+if (eventWindow === null) {
+  // Could not be answered — an unknown organization, a window past the cap,
+  // the organization's community not switched on, or too many requests. NOT
+  // "nothing scheduled" — do not cache this as an empty calendar.
+} else {
+  for (const event of eventWindow.teasers) {
+    console.log(event.title, event.startAt, event.accessType);
+
+    // `hostNames` is EVERY host, in the order the organization set. `hostName`
+    // is only the FIRST of them, so a card built from it advertises one
+    // instructor for a co-taught class and silently drops the rest.
+    //
+    // Join with `Intl.ListFormat`, not `join(', ')` — the conjunction is
+    // language-specific ("A and B" / "A und B" / "A ve B").
+    //
+    // The list can be EMPTY: an event nobody hosts publicly has every host
+    // left out, and `format([])` is `''`. Render the host line only when the
+    // formatted string is non-empty, or the card grows a blank row.
+    const hosts = new Intl.ListFormat('tr', {
+      style: 'long',
+      type: 'conjunction',
+    }).format(event.hostNames);
+
+    if (hosts) console.log(hosts);
+  }
+  if (eventWindow.truncated) {
+    // The window holds more than `eventWindow.limit` events; the rest are
+    // simply absent from `teasers`. Tell the reader, e.g. "and more — narrow
+    // the dates to see them."
+  }
+}
+```
+
+The window is capped at 92 days by the API — ask for what you need rather than
+the widest range that compiles.
+
+**`null` and an empty list mean different things.** `null` is "this request could
+not be answered" — an unknown organization, a window past the cap, the
+organization's community not switched on, or too many requests. An empty
+`teasers` array is an honest "nothing scheduled." Render them differently;
+caching a `null` as "runs no events" is exactly the bug the API's own docs warn
+about.
+
+**`truncated` is a third, independent signal.** The window can hold more events
+than `limit` (currently 100); when it does, the extra ones are not returned at
+all, and `truncated` is the only way to know they exist — it can be `true`
+even when `teasers` came back shorter than `limit`, since a paid event dropped
+from the answer still counts toward the total the window held. The API's
+schema says a storefront **must** surface this; silently rendering `teasers`
+alone hides events the visitor should know are there.
+
+A members-only event's `description` and `image` come back `null` to a caller
+who cannot see them, and a subscription-gated one shows just enough to justify
+joining. That masking happens on the server — there is nothing for your code to
+hide.
+
+### Recurring gatherings
+
+`catalog.upcomingEventSeries` answers the same window with one entry per
+**series** rather than per date — "every Wednesday at 20:00" instead of eight
+Wednesdays:
+
+```ts
+const { publicCommunityEventSeriesTeaserWindow: seriesWindow } =
+  await client.catalog.upcomingEventSeries({
+    from: now.toISOString(),
+    to: in90Days.toISOString(),
+  });
+
+if (seriesWindow !== null) {
+  for (const series of seriesWindow.series) {
+    console.log(
+      series.title,
+      series.nextOccurrence?.startAt,
+      series.upcomingOccurrenceCount,
+    );
+  }
+}
+```
+
+`recurrence` is `null` when the pattern cannot be described in those terms, and
+`nextOccurrence` is `null` once the series has no date left to show — check
+`hasEnded` rather than reading a null as "not scheduled yet". Clock times are in
+the organizer's `timezone`. Everything above about the 92-day cap, `null` versus
+an empty list, `truncated` and server-side masking applies unchanged.
+
+### One event or series
+
+`catalog.event` and `catalog.eventSeries` read a single gathering, for an event
+page on your own site instead of a link out to the platform's share page. Pass
+the `id` a teaser above came back with:
+
+```ts
+const { publicCommunityEventTeaser: event } = await client.catalog.event({
+  eventId: teaser.id,
+});
+
+if (event === null) {
+  // Unknown, unpublished, or another organization's: answer with a 404.
+} else if (event.series !== null) {
+  const { publicCommunityEventSeriesTeaser: series } =
+    await client.catalog.eventSeries({ seriesId: event.series.id });
+
+  for (const date of series?.upcomingOccurrences ?? []) {
+    console.log(date.startAt, date.isCancelled);
+  }
+}
+```
+
+Both carry the same server-side masking as the window reads, and both still
+answer for a gathering that has finished: an event keeps `isCancelled` and its
+`recordingVideo` (null unless the organizer published it to visitors), and a
+series says `hasEnded`. Neither carries a join link. `upcomingOccurrences`
+stops at 10 dates; `upcomingOccurrenceCount` says how many there are.
 
 ## Cart
 
@@ -404,7 +649,18 @@ without fetching the thread, so "12 replies" costs no extra round trip.
 **Rich text is Slate JSON, not a string.** `content` on a post or comment, and
 `freeResponseAnswer.value` on an assignment, are all
 `[{ type: 'p', children: [{ text: '…' }] }]`. Passing a bare string yields a
-record that renders as nothing.
+record that renders as nothing. To display rich text without walking the
+document, read the `<field>Rich { text html }` sibling that these operations
+return beside the JSON field: its plain text, and HTML sanitized on the server.
+`SdkCommunityFeed`, `SdkCommunitySpacePosts` and `SdkForum` return
+`contentRich` on posts (`descriptionRich` on the forum), and
+`SdkCreateCommunityPost` on the returned edge's post; the community-event
+operations return `descriptionRich`; `SdkCourseItemDetail` returns one for
+every rich-text field it selects. The sibling is null exactly when the JSON
+field is null, except `hintsRich`: like `hints`, it is never null, and it is
+empty when `hints` is. Every other operation (single post, post and forum-post
+writes, comments, quiz and assignment submissions) returns the JSON field only
+for now.
 
 **Exams are not in this release.** The operations exist server-side but are not
 published while their integrity properties are being fixed; publishing them
@@ -416,6 +672,142 @@ come back, and `learn.attachmentUrl` downloads them — but the upload itself
 goes through a REST endpoint the SDK has no GraphQL equivalent for, so an item
 with `allowFileUpload: true` cannot be completed from your own page. Send those
 students to the platform's own assignment page until an upload mutation exists.
+
+## Forms
+
+Read one of the organization's forms and answer it. Anonymous throughout — a
+contact or lead-capture form is filled by someone with no account.
+
+```ts
+const { organization } = await client.forms.get({ slug: 'contact' });
+const form = organization?.form;
+
+await client.forms.submit({
+  formId: form!.id,
+  submissions: [{ answer: 'Hello', formQuestionId: form!.sections[0].questions[0].id }],
+  // Optional, and what lead capture is usually for.
+  attribution: { utmSource: 'newsletter' },
+});
+```
+
+`submit` starts the session and answers it in one call. The session's
+`anonAccessToken` is held for the duration and never reaches your code — which
+is also why there is no public `startSession`: a session id without its token is
+something that looks usable and is not.
+
+**What the SDK can render today.** `forms.get` selects every question type the
+schema defines, so a text, choice, contact, date, scale, matrix, file or content
+question arrives with the fields needed to draw it. Two caveats:
+
+- **`PAYMENT` questions cannot be completed.** Collecting the payment needs
+  `paymentSession(formSessionId:)`, which requires a session that does not exist
+  when the form is read. Skip that `__typename` rather than rendering a field the
+  visitor cannot answer.
+- **Check `publishStatus`** before rendering. A form that is not public still
+  resolves for a permitted viewer.
+
+## Mailing lists
+
+A newsletter or waitlist signup: one address onto one of the organization's
+mailing lists. Anonymous — the visitor needs no account.
+
+```ts
+import { isUserError } from '@teachfluence/sdk';
+
+try {
+  await client.mailingLists.subscribe({
+    email,
+    mailingListId: 'cm1a2b3c4d5e6f7g8h9i0j1k2',
+    // Only the documents the visitor actually ticked.
+    legalDocumentIds: acceptedPrivacyNotice ? [privacyNoticeId] : [],
+  });
+  showThanks();
+} catch (error) {
+  if (isUserError(error)) {
+    setFieldError(error.forField('email')?.message ?? error.message);
+    return;
+  }
+  throw error;
+}
+```
+
+`subscribe` resolves with nothing: resolving means the address is on the list,
+and a refusal throws. It never says whether the address was already there, or
+since when — the call runs for any address anyone types, and that is not a
+stranger's to learn.
+
+**The list must be public and active, and your organization's own.** Anything
+else — a private list, another organization's, a deleted one — is refused with
+the same `NOT_FOUND`, on purpose, so the answer says nothing about lists you
+cannot see. A public list that has been switched off answers `UNAUTHORIZED`.
+The id may be the list's GraphQL id or the plain id the Teachfluence tools
+return when they create it.
+
+**Consent documents must be published.** A `legalDocumentIds` entry that is not
+a published document of the list's organization refuses the whole signup
+(`NOT_FOUND` on `legalDocumentIds` and that entry's index) rather than
+subscribing the address with no consent on record.
+
+**Only an address.** When the signup needs more than that — a name, a
+question — build it as a [form](#forms) instead, and have an automation add
+each respondent to the list when the form is submitted.
+
+**Never a `mailto:` link** in place of either. It captures nobody: the address
+never reaches the list, and nothing tells you it did not.
+
+## Resuming a video
+
+Where the signed-in viewer stopped in a video outside a course (an event's
+recording, a video on a page), so your player opens there next time:
+
+```ts
+const { node } = await client.videos.watchState({ id: videoId });
+const state = node?.__typename === 'Video' ? node.viewerWatchState : null;
+
+// Resume unless they had finished it (or are at its very end).
+const resumeAt =
+  state && state.status !== 'COMPLETED' && state.progress <= 0.99
+    ? state.progress
+    : 0;
+
+// A lost report must not interrupt playback, so each one ignores a failure.
+const ignore = () => {};
+
+// While it plays, about every 10 seconds and on a pause.
+await client.videos.updateWatchState({ progress: 0.4, videoId }).catch(ignore);
+
+// As the visitor leaves the page, so the write is not cancelled with it.
+await client.videos
+  .updateWatchState({ progress: 0.4, videoId }, { keepalive: true })
+  .catch(ignore);
+
+// At the end. Nothing partial after this until it ends again.
+await client.videos.updateWatchState({ completed: true, videoId }).catch(ignore);
+```
+
+`progress` is a 0–1 fraction. `viewerWatchState` is null for a visitor who is
+not signed in, for a video they have never played or may not watch, and for a
+lesson's video; ask `session.viewer` to know whether anyone is signed in.
+`node` is null only for an id that does not exist.
+
+- **Report about every 10 seconds** while it plays, and on a pause, a seek and
+  as the visitor leaves — not on every frame: writes are budgeted per viewer.
+  Skip a report while the duration is not yet a finite number above zero, and
+  clamp the fraction to 0–1.
+- **Once a video counts as watched, report nothing partial for it** until it
+  ends again — whether it was COMPLETED when the player opened, or a write
+  answered `status: 'COMPLETED'`. A lower position un-watches a video that
+  counted as watched by its position alone. Near the end, send
+  `completed: true`, which a later lower position does not undo.
+- **A refusal is a `TeachfluenceUserError`**: `UNAUTHENTICATED`, `NOT_FOUND`
+  (no such video, or not theirs to watch), `INVALID` (a lesson's video — those
+  are tracked by `learn.updateProgress` — or input out of range, such as a
+  `progress` above 1) or `RATE_LIMITED`. A report can also fail as a
+  `TeachfluenceTransportError`, likeliest on the one sent as the page closes.
+  A lost position report should not interrupt playback, so catch every
+  rejection from one, not only a refusal.
+- `keepalive` covers the request, not an asynchronous `getAccessToken` that
+  runs before it.
 
 ## Errors
 
@@ -492,10 +884,13 @@ base to the route you are claiming:
 | Next (static export) | `basePath: '/docs'` |
 | CRA | `"homepage": "/docs"` |
 
-Claiming the site root (`--route /`) is **not supported**. The edge matcher
-resolves a claim against slash-stripped path segments, so a root pattern matches
-nothing and a request for `/` exits before any claim is considered. Claim a real
-path and point your domain's landing page at it.
+Claiming the site root (`--route /`) is supported, at **EXACT** scope only — a
+PREFIX claim there would match every URL in the org. An EXACT claim owns exactly
+one URL, so a root claim serves your `index.html` at `/` and nothing else: every
+asset is a different URL and falls through to the platform. A site at the root
+therefore needs a second, PREFIX claim for its assets — and both must be
+redeployed together, since each route serves the bundle it was last activated
+against. See the CLI README for the worked example.
 
 Without `--route`, the bundle uploads but serves no traffic — useful for
 building a deploy you activate later, surprising if you expected a live site.
@@ -510,10 +905,36 @@ time. The page builder does a lot of SEO work for you — per-org canonicals,
 JSON-LD, sitemaps, ISR — and taking your own frontend means taking that on.
 Prerender your catalog pages and rebuild on the content-changed webhook.
 
+**Structured data, stated the platform's way.** `buildOrderableJsonLd` is the
+builder the platform's own product pages use, shipped here as a pure function
+(no network, no React), so your pages state a product exactly as ours would: an
+`Offer` while the public can buy it, an `OutOfStock` one for a paused Product or
+Course, and none for a paused Event, a members-only (`MEMBERS_ONLY`) or
+not-on-sale (`NOT_ON_SALE`) product, or an event that has ended; an `Event` only
+when it can be placed; and every node pointing at
+your organization's one `@id` (`organizationJsonLdId(yourOrigin)`). Execute
+`SdkOrderableJsonLdFacts` for the product's sale, schedule and people facts,
+pass its `node` to `orderableNodeFacts`, add the page's own `name`, `url`,
+`type` and `organizationId`, and serialize the result into a
+`<script type="application/ld+json">` with `<` escaped.
+
+You do not need to state the organization node itself on a bundle the platform
+serves: every production page of a deployed bundle gets it, spliced in after
+`<head>` (see the CLI README to opt out).
+
 ## Versioning
 
 Operations are content-addressed and published per release. Upgrading the SDK
 can add operations; removing one is a breaking change and gets a major version.
+
+Content-addressed means the id IS the document's bytes, so **editing** an
+operation gives it a new id. The API keeps accepting the old id while clients it
+knows about still send it, so the same operation name may be listed with two ids
+for a while. Nothing is "removed" and the bump is only minor, but a consumer
+pinned to a version whose id the API has stopped accepting loses that one call.
+Upgrade the SDK in step with the API, treat the API's own list of accepted
+operations as authoritative, and read the release notes for an operation you
+depend on.
 
 ## License
 

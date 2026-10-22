@@ -1,0 +1,15 @@
+query SdkCourseCustomFields($organizationSlug: String!, $slug: String!) {
+  course(organizationSlug: $organizationSlug, slug: $slug) {
+    id
+    customFieldValues {
+      value
+      fieldDefinition {
+        id
+        title
+        type
+        visibility
+        validationSchema
+      }
+    }
+  }
+}
